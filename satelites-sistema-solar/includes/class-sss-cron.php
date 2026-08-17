@@ -1,6 +1,6 @@
 <?php
 /**
- * Gestiona la tarea programada diaria que actualiza los datos.
+ * Gestiona la tarea programada semanal que actualiza los datos.
  *
  * @package Satelites_Sistema_Solar
  */
@@ -11,11 +11,31 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class SSS_Cron {
 
+	const SCHEDULE = 'sss_weekly';
+
 	/**
-	 * Engancha el manejador del evento cron.
+	 * Engancha el manejador del evento cron y registra la periodicidad semanal.
 	 */
 	public static function init() {
+		add_filter( 'cron_schedules', array( __CLASS__, 'register_schedule' ) );
 		add_action( SSS_CRON_HOOK, array( __CLASS__, 'run' ) );
+	}
+
+	/**
+	 * Añade una periodicidad "semanal" a WP-Cron (WordPress no trae una por defecto).
+	 *
+	 * @param array $schedules Periodicidades registradas.
+	 * @return array
+	 */
+	public static function register_schedule( $schedules ) {
+		if ( ! isset( $schedules[ self::SCHEDULE ] ) ) {
+			$schedules[ self::SCHEDULE ] = array(
+				'interval' => WEEK_IN_SECONDS,
+				'display'  => __( 'Una vez a la semana', 'satelites-sistema-solar' ),
+			);
+		}
+
+		return $schedules;
 	}
 
 	/**
@@ -26,12 +46,24 @@ class SSS_Cron {
 	}
 
 	/**
-	 * Programa el evento diario si aún no lo está.
+	 * Programa el evento semanal si aún no lo está (o si la periodicidad guardada
+	 * ya no coincide, p. ej. tras cambiar de "daily" a "sss_weekly").
 	 */
 	public static function schedule() {
-		if ( ! wp_next_scheduled( SSS_CRON_HOOK ) ) {
-			wp_schedule_event( time(), 'daily', SSS_CRON_HOOK );
+		// La activación se ejecuta antes de que 'plugins_loaded' llame a init(),
+		// así que hay que registrar la periodicidad también aquí.
+		add_filter( 'cron_schedules', array( __CLASS__, 'register_schedule' ) );
+
+		$next = wp_next_scheduled( SSS_CRON_HOOK );
+		if ( $next && self::SCHEDULE === wp_get_schedule( SSS_CRON_HOOK ) ) {
+			return;
 		}
+
+		if ( $next ) {
+			self::unschedule();
+		}
+
+		wp_schedule_event( time(), self::SCHEDULE, SSS_CRON_HOOK );
 	}
 
 	/**

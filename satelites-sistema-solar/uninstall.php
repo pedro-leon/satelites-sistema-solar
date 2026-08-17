@@ -14,4 +14,4 @@ delete_option( 'sss_planets_data' );
 delete_option( 'sss_last_updated' );
 delete_option( 'sss_last_error' );
 
-wp_clear_scheduled_hook( 'sss_daily_moons_fetch' );
+wp_clear_scheduled_hook( 'sss_weekly_moons_fetch' );

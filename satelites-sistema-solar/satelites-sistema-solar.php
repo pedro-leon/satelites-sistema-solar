@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Satélites del Sistema Solar
  * Plugin URI:         https://github.com/pedro-leon/mi_repo
- * Description:        Muestra el número de satélites de cada planeta del sistema solar y un listado ordenable con sus características, obtenidos a diario desde una API pública.
+ * Description:        Muestra el número de satélites de cada planeta del sistema solar y un listado ordenable con sus características, obtenidos semanalmente desde una API pública.
  * Version:             1.0.0
  * Requires at least:  5.8
  * Requires PHP:        7.4
@@ -22,7 +22,7 @@ define( 'SSS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SSS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'SSS_TEXT_DOMAIN', 'satelites-sistema-solar' );
 
-define( 'SSS_CRON_HOOK', 'sss_daily_moons_fetch' );
+define( 'SSS_CRON_HOOK', 'sss_weekly_moons_fetch' );
 define( 'SSS_OPTION_MOONS', 'sss_moons_data' );
 define( 'SSS_OPTION_PLANETS', 'sss_planets_data' );
 define( 'SSS_OPTION_LAST_UPDATED', 'sss_last_updated' );

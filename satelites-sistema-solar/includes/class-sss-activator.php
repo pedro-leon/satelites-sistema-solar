@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class SSS_Activator {
 
 	/**
-	 * Programa la tarea diaria y lanza una primera descarga de datos.
+	 * Programa la tarea semanal y lanza una primera descarga de datos.
 	 */
 	public static function activate() {
 		require_once SSS_PLUGIN_DIR . 'includes/class-sss-cron.php';

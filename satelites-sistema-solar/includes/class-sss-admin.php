@@ -160,7 +160,7 @@ class SSS_Admin {
 			</form>
 
 			<p class="description">
-				<?php esc_html_e( 'Los datos se obtienen automáticamente una vez al día desde la API pública api.le-systeme-solaire.net.', 'satelites-sistema-solar' ); ?>
+				<?php esc_html_e( 'Los datos se obtienen automáticamente una vez a la semana desde la API pública api.le-systeme-solaire.net.', 'satelites-sistema-solar' ); ?>
 			</p>
 		</div>
 		<?php
