@@ -1,0 +1,137 @@
+.sss-wrapper {
+	--sss-border: #dcdcde;
+	--sss-accent: #2271b1;
+	--sss-bg-alt: #f6f7f7;
+	font-size: 15px;
+	line-height: 1.5;
+}
+
+.sss-notice {
+	padding: 1em;
+	background: var(--sss-bg-alt);
+	border-left: 4px solid var(--sss-accent);
+}
+
+/* Resumen por planeta */
+
+.sss-summary-title {
+	margin-bottom: 0.75em;
+}
+
+.sss-summary-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+	gap: 0.75em;
+	list-style: none;
+	margin: 0 0 1.5em;
+	padding: 0;
+}
+
+.sss-summary-item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.25em;
+	padding: 1em 0.5em;
+	background: var(--sss-bg-alt);
+	border: 1px solid var(--sss-border);
+	border-radius: 6px;
+	text-align: center;
+}
+
+.sss-summary-item .sss-planet-name {
+	font-weight: 600;
+}
+
+.sss-summary-item .sss-planet-count {
+	font-size: 1.6em;
+	font-weight: 700;
+	color: var(--sss-accent);
+}
+
+.sss-summary-total {
+	background: var(--sss-accent);
+	border-color: var(--sss-accent);
+}
+
+.sss-summary-total .sss-planet-name,
+.sss-summary-total .sss-planet-count {
+	color: #fff;
+}
+
+/* Selector y tabla */
+
+.sss-select-label {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 0.35em;
+}
+
+.sss-planet-select {
+	margin-bottom: 1em;
+	padding: 0.4em 0.6em;
+	min-width: 220px;
+}
+
+.sss-table-wrapper {
+	overflow-x: auto;
+}
+
+.sss-table {
+	width: 100%;
+	border-collapse: collapse;
+	min-width: 720px;
+}
+
+.sss-table th,
+.sss-table td {
+	padding: 0.6em 0.8em;
+	border-bottom: 1px solid var(--sss-border);
+	text-align: left;
+	white-space: nowrap;
+}
+
+.sss-table thead th {
+	background: var(--sss-bg-alt);
+	cursor: pointer;
+	user-select: none;
+	position: relative;
+}
+
+.sss-table thead th:hover {
+	background: #eaeaea;
+}
+
+.sss-table thead th::after {
+	content: "";
+	display: inline-block;
+	width: 0.6em;
+	margin-left: 0.35em;
+	opacity: 0.4;
+}
+
+.sss-table thead th[aria-sort="ascending"]::after {
+	content: "▲";
+	opacity: 1;
+}
+
+.sss-table thead th[aria-sort="descending"]::after {
+	content: "▼";
+	opacity: 1;
+}
+
+.sss-table tbody tr:nth-child(odd) {
+	background: var(--sss-bg-alt);
+}
+
+.sss-empty-message {
+	padding: 1em;
+	font-style: italic;
+}
+
+.sss-last-updated {
+	margin-top: 1em;
+	font-size: 0.85em;
+	color: #646970;
+}
