@@ -39,9 +39,11 @@ class SSS_Api_Client {
 			if ( empty( $planet['id'] ) ) {
 				continue;
 			}
+			$name = ! empty( $planet['englishName'] ) ? $planet['englishName'] : $planet['name'];
+
 			$planets[] = array(
 				'id'   => $planet['id'],
-				'name' => ! empty( $planet['englishName'] ) ? $planet['englishName'] : $planet['name'],
+				'name' => SSS_I18n_Names::translate_planet( $name ),
 			);
 		}
 

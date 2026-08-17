@@ -29,6 +29,7 @@ define( 'SSS_OPTION_LAST_UPDATED', 'sss_last_updated' );
 define( 'SSS_OPTION_LAST_ERROR', 'sss_last_error' );
 define( 'SSS_API_BASE', 'https://api.le-systeme-solaire.net/rest/bodies/' );
 
+require_once SSS_PLUGIN_DIR . 'includes/class-sss-i18n-names.php';
 require_once SSS_PLUGIN_DIR . 'includes/class-sss-api-client.php';
 require_once SSS_PLUGIN_DIR . 'includes/class-sss-data-store.php';
 require_once SSS_PLUGIN_DIR . 'includes/class-sss-cron.php';
