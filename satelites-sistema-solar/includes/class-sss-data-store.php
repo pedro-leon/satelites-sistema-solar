@@ -60,7 +60,11 @@ class SSS_Data_Store {
 		$name             = ! empty( $moon['englishName'] ) ? $moon['englishName'] : ( $moon['name'] ?? '' );
 		$alternative_name = trim( $moon['alternativeName'] ?? '' );
 
-		if ( '' === $name ) {
+		if ( '' !== $name ) {
+			// Traduce al español los satélites más conocidos. Los que no
+			// están en el diccionario se quedan con su nombre internacional.
+			$name = SSS_I18n_Names::translate_moon( $name );
+		} else {
 			// Algunos satélites irregulares aún no tienen nombre oficial: solo
 			// su designación provisional. En ese caso se usa como nombre y no
 			// se repite también en la columna de nombre provisional.
