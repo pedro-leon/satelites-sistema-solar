@@ -13,5 +13,6 @@ delete_option( 'sss_moons_data' );
 delete_option( 'sss_planets_data' );
 delete_option( 'sss_last_updated' );
 delete_option( 'sss_last_error' );
+delete_option( 'sss_api_key' );
 
 wp_clear_scheduled_hook( 'sss_weekly_moons_fetch' );
