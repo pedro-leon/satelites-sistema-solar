@@ -70,12 +70,28 @@ class SSS_Api_Client {
 	 * @return array|WP_Error
 	 */
 	private static function request( $query ) {
+		$api_key = trim( (string) get_option( SSS_OPTION_API_KEY, '' ) );
+
+		if ( '' === $api_key ) {
+			return new WP_Error(
+				'sss_api_missing_key',
+				sprintf(
+					/* translators: %s: URL para generar una clave de API. */
+					__( 'Falta configurar la clave de API. Genera una gratis en %s y guárdala en la página "Satélites SS" del panel de administración.', 'satelites-sistema-solar' ),
+					SSS_API_KEY_URL
+				)
+			);
+		}
+
 		$url = add_query_arg( $query, SSS_API_BASE );
 
 		$response = wp_remote_get(
 			$url,
 			array(
 				'timeout' => 30,
+				'headers' => array(
+					'Authorization' => 'Bearer ' . $api_key,
+				),
 			)
 		);
 
