@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Satélites España Shortcode
  * Description: Muestra mediante shortcode una tabla de satélites espaciales asociados a España según GCAT.
- * Version: 1.1.5
+ * Version: 1.2.0
  * Author: Pedro León with Codex
  * License: GPL-2.0-or-later
  * Text Domain: satelites-espana-shortcode
@@ -37,8 +37,25 @@ final class Satelites_Espana_Shortcode {
 	private const OPTION_SOURCE_UPDATED = 'ses_gcat_source_updated';
 	private const OPTION_LAST_SYNC = 'ses_gcat_last_sync';
 
+	/* Guarda el ultimo fallo de sincronizacion para mostrarlo en el admin. */
+	private const OPTION_LAST_ERROR = 'ses_gcat_last_error';
+
+	/*
+	 * ETag y Last-Modified de la ultima respuesta 200 de GCAT. Permiten pedir
+	 * peticiones condicionales (If-None-Match / If-Modified-Since) para no
+	 * descargar el TSV completo cuando la fuente no ha cambiado.
+	 */
+	private const OPTION_HTTP_ETAG = 'ses_gcat_http_etag';
+	private const OPTION_HTTP_LAST_MODIFIED = 'ses_gcat_http_last_modified';
+
 	/* Nombre interno del evento semanal de WP-Cron. */
 	private const CRON_HOOK = 'ses_update_spain_satellites';
+
+	/*
+	 * Evita imprimir el bloque <style> mas de una vez cuando el shortcode se
+	 * usa varias veces en la misma pagina.
+	 */
+	private static bool $styles_hooked = false;
 
 	/**
 	 * Registra shortcodes, evento de actualizacion, frecuencia semanal y pagina
@@ -134,20 +151,25 @@ final class Satelites_Espana_Shortcode {
 		$automatic_items = get_option( self::OPTION_DATA, array() );
 
 		/*
-		 * Si no hay cache, si la cache es de una version antigua que aun no
-		 * tenia la columna Piece, o si la ultima sincronizacion tiene mas de una
-		 * semana, se fuerza una nueva sincronizacion.
+		 * Si no hay cache o si es de una version antigua que aun no tenia la
+		 * columna Piece, no hay nada util que mostrar todavia: se fuerza una
+		 * descarga sincrona para que el primer visitante ya vea datos.
 		 */
-		if (
-			empty( $automatic_items )
-			|| ! self::cached_items_have_piece( $automatic_items )
-			|| self::should_refresh_cached_data()
-		) {
+		if ( empty( $automatic_items ) || ! self::cached_items_have_piece( $automatic_items ) ) {
 			/*
 			 * Si la descarga falla, se mantiene la ultima cache valida. Por eso
 			 * no se comprueba el valor devuelto aqui.
 			 */
 			self::update_data();
+		} elseif ( self::should_refresh_cached_data() ) {
+			/*
+			 * Ya hay cache utilizable: no merece la pena hacer esperar al
+			 * visitante a una peticion HTTP a un tercero. Se sigue mostrando la
+			 * cache actual y la actualizacion se programa en segundo plano via
+			 * WP-Cron, que WordPress dispara de forma no bloqueante al final de
+			 * esta misma peticion.
+			 */
+			self::maybe_schedule_async_refresh();
 		}
 
 		/*
@@ -169,24 +191,18 @@ final class Satelites_Espana_Shortcode {
 		$last_sync      = get_option( self::OPTION_LAST_SYNC, '' );
 
 		/*
+		 * El CSS del shortcode se imprime una sola vez en el footer, aunque el
+		 * shortcode se use varias veces en la misma pagina.
+		 */
+		self::maybe_hook_footer_styles();
+
+		/*
 		 * Se usa buffer de salida para poder escribir HTML mezclado con PHP de
 		 * forma legible y devolverlo como string, que es lo que espera un shortcode.
 		 */
 		ob_start();
 		?>
 		<div class="satelites-espana-wrapper">
-			<style>
-				/*
-				 * CSS embebido y acotado al shortcode: garantiza que la fila de
-				 * ano destaque aunque el tema activo no aporte estilos propios.
-				 */
-				.satelites-espana-table .satelites-espana-year-row th {
-					background: #1f2937;
-					color: #ffffff;
-					font-weight: 700;
-					text-align: left;
-				}
-			</style>
 			<table class="satelites-espana-table">
 				<thead>
 					<tr>
@@ -241,7 +257,7 @@ final class Satelites_Espana_Shortcode {
 
 			<?php if ( $source_updated || $last_sync ) : ?>
 				<p class="satelites-espana-meta">
-					Fuente: data from GCAT (J. McDowell, <a href="https://planet4589.org/space/gcat" target="_blank">planet4589.org/space/gcat</a>) | 
+					Fuente: data from GCAT (J. McDowell, <a href="https://planet4589.org/space/gcat" target="_blank" rel="noopener noreferrer">planet4589.org/space/gcat</a>) |
 					<?php
 					if ( $source_updated ) {
 						/* Formatea "2026 May 15 0115:41" como "15/05/2026 01:15:41". */
@@ -272,6 +288,60 @@ final class Satelites_Espana_Shortcode {
 		<?php
 
 		return (string) ob_get_clean();
+	}
+
+	/**
+	 * Programa una actualizacion inmediata en segundo plano si no hay ya una
+	 * pendiente.
+	 *
+	 * wp_schedule_single_event() solo anota el evento; WordPress lo dispara con
+	 * una peticion HTTP de loopback no bloqueante al terminar de enviar la
+	 * respuesta actual, asi que el visitante no espera a la descarga.
+	 */
+	private static function maybe_schedule_async_refresh(): void {
+		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
+			wp_schedule_single_event( time(), self::CRON_HOOK );
+		}
+	}
+
+	/**
+	 * Registra la impresion del CSS del shortcode en wp_footer.
+	 *
+	 * add_action() con el mismo callback y prioridad se deduplica en
+	 * WordPress, asi que es seguro llamar a este metodo cada vez que se
+	 * renderiza el shortcode: el CSS solo se imprime una vez por pagina.
+	 */
+	private static function maybe_hook_footer_styles(): void {
+		if ( self::$styles_hooked ) {
+			return;
+		}
+
+		self::$styles_hooked = true;
+
+		add_action( 'wp_footer', array( __CLASS__, 'print_footer_styles' ) );
+	}
+
+	/**
+	 * Imprime el CSS acotado al shortcode.
+	 *
+	 * Vive en el footer, no en cada renderizado, para que usar el shortcode
+	 * varias veces en la misma pagina no duplique el bloque <style>.
+	 */
+	public static function print_footer_styles(): void {
+		?>
+		<style>
+			/*
+			 * CSS embebido y acotado al shortcode: garantiza que la fila de
+			 * ano destaque aunque el tema activo no aporte estilos propios.
+			 */
+			.satelites-espana-table .satelites-espana-year-row th {
+				background: #1f2937;
+				color: #ffffff;
+				font-weight: 700;
+				text-align: left;
+			}
+		</style>
+		<?php
 	}
 
 	/**
@@ -397,6 +467,9 @@ final class Satelites_Espana_Shortcode {
 
 		/* Mensaje corto que llega por query string tras anadir o borrar. */
 		$message      = isset( $_GET['ses_message'] ) ? sanitize_text_field( wp_unslash( $_GET['ses_message'] ) ) : '';
+
+		/* Ultimo fallo de sincronizacion con GCAT, si lo hay. */
+		$last_error   = get_option( self::OPTION_LAST_ERROR, array() );
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Satélites España', 'satelites-espana-shortcode' ); ?></h1>
@@ -407,6 +480,21 @@ final class Satelites_Espana_Shortcode {
 				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Satélite manual eliminado.', 'satelites-espana-shortcode' ); ?></p></div>
 			<?php elseif ( 'missing' === $message ) : ?>
 				<div class="notice notice-error is-dismissible"><p><?php esc_html_e( 'Revisa los campos obligatorios: fecha, pieza y nombre.', 'satelites-espana-shortcode' ); ?></p></div>
+			<?php endif; ?>
+
+			<?php if ( ! empty( $last_error['message'] ) ) : ?>
+				<div class="notice notice-warning">
+					<p>
+						<?php
+						printf(
+							/* translators: 1: error message, 2: date and time of the failed sync. */
+							esc_html__( 'La última sincronización con GCAT falló (%1$s) el %2$s. Se sigue mostrando la última copia guardada correctamente.', 'satelites-espana-shortcode' ),
+							esc_html( (string) $last_error['message'] ),
+							esc_html( self::format_meta_date( (string) ( $last_error['time'] ?? '' ) ) )
+						);
+						?>
+					</p>
+				</div>
 			<?php endif; ?>
 
 			<h2><?php esc_html_e( 'Añadir satélite manual', 'satelites-espana-shortcode' ); ?></h2>
@@ -512,6 +600,23 @@ final class Satelites_Espana_Shortcode {
 	 */
 	public static function update_data(): bool {
 		/*
+		 * Peticion condicional: si ya tenemos ETag o Last-Modified de una
+		 * descarga anterior, se envian para que GCAT pueda responder 304 sin
+		 * reenviar el TSV completo cuando la fuente no ha cambiado.
+		 */
+		$headers = array();
+		$etag    = get_option( self::OPTION_HTTP_ETAG, '' );
+		$modified_since = get_option( self::OPTION_HTTP_LAST_MODIFIED, '' );
+
+		if ( is_string( $etag ) && '' !== $etag ) {
+			$headers['If-None-Match'] = $etag;
+		}
+
+		if ( is_string( $modified_since ) && '' !== $modified_since ) {
+			$headers['If-Modified-Since'] = $modified_since;
+		}
+
+		/*
 		 * wp_remote_get usa la API HTTP de WordPress, respetando proxies,
 		 * certificados y filtros del hosting. El timeout evita dejar la pagina
 		 * esperando demasiado si GCAT no responde.
@@ -522,18 +627,29 @@ final class Satelites_Espana_Shortcode {
 				'timeout'     => 30,
 				'redirection' => 3,
 				'user-agent'  => 'WordPress/Satelites-Espana-Shortcode',
+				'headers'     => $headers,
 			)
 		);
 
 		if ( is_wp_error( $response ) ) {
 			/* Error de red, DNS, SSL, timeout, etc. Se conserva la cache anterior. */
+			self::record_sync_error( $response->get_error_message() );
 			return false;
 		}
 
-		/* Solo una respuesta HTTP 200 se considera valida para refrescar cache. */
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 
+		if ( 304 === $status_code ) {
+			/* La fuente confirma que no hay cambios: la cache actual sigue siendo valida. */
+			update_option( self::OPTION_LAST_SYNC, current_time( 'mysql' ), false );
+			self::clear_sync_error();
+			return true;
+		}
+
+		/* Fuera de 200/304 se considera fallo y se conserva la cache anterior. */
 		if ( 200 !== $status_code ) {
+			/* translators: %d: HTTP status code returned by GCAT. */
+			self::record_sync_error( sprintf( __( 'GCAT respondió con el código HTTP %d', 'satelites-espana-shortcode' ), $status_code ) );
 			return false;
 		}
 
@@ -543,6 +659,7 @@ final class Satelites_Espana_Shortcode {
 
 		if ( empty( $data['items'] ) ) {
 			/* Si el parseo no produce satelites espanoles, no se pisa la cache. */
+			self::record_sync_error( __( 'La fuente respondió pero no se encontraron satélites españoles (SatState=E).', 'satelites-espana-shortcode' ) );
 			return false;
 		}
 
@@ -556,7 +673,36 @@ final class Satelites_Espana_Shortcode {
 		update_option( self::OPTION_SOURCE_UPDATED, $data['source_updated'], false );
 		update_option( self::OPTION_LAST_SYNC, current_time( 'mysql' ), false );
 
+		/* Guarda las cabeceras de validacion para la proxima peticion condicional. */
+		$new_etag            = wp_remote_retrieve_header( $response, 'etag' );
+		$new_last_modified   = wp_remote_retrieve_header( $response, 'last-modified' );
+		update_option( self::OPTION_HTTP_ETAG, is_string( $new_etag ) ? $new_etag : '', false );
+		update_option( self::OPTION_HTTP_LAST_MODIFIED, is_string( $new_last_modified ) ? $new_last_modified : '', false );
+
+		self::clear_sync_error();
+
 		return true;
+	}
+
+	/**
+	 * Guarda el ultimo error de sincronizacion para mostrarlo en el admin.
+	 */
+	private static function record_sync_error( string $message ): void {
+		update_option(
+			self::OPTION_LAST_ERROR,
+			array(
+				'message' => $message,
+				'time'    => current_time( 'mysql' ),
+			),
+			false
+		);
+	}
+
+	/**
+	 * Borra el ultimo error registrado tras una sincronizacion correcta.
+	 */
+	private static function clear_sync_error(): void {
+		delete_option( self::OPTION_LAST_ERROR );
 	}
 
 	/**
@@ -578,6 +724,30 @@ final class Satelites_Espana_Shortcode {
 			/* Misma defensa para los datos manuales. */
 			$manual_items = array();
 		}
+
+		/*
+		 * Si GCAT ya publica oficialmente una pieza que se habia anadido a
+		 * mano (por ejemplo, un lanzamiento que se registro por adelantado),
+		 * se descarta la version manual para no mostrar el satelite dos veces.
+		 */
+		$automatic_pieces = array();
+
+		foreach ( $automatic_items as $automatic_item ) {
+			$piece = strtoupper( trim( (string) ( $automatic_item['piece'] ?? '' ) ) );
+
+			if ( '' !== $piece ) {
+				$automatic_pieces[ $piece ] = true;
+			}
+		}
+
+		$manual_items = array_filter(
+			$manual_items,
+			static function ( $manual_item ) use ( $automatic_pieces ) {
+				$piece = strtoupper( trim( (string) ( $manual_item['piece'] ?? '' ) ) );
+
+				return '' === $piece || ! isset( $automatic_pieces[ $piece ] );
+			}
+		);
 
 		/* Mezcla ambos origenes y aplica un unico criterio cronologico. */
 		return self::sort_items_chronologically( array_merge( $automatic_items, $manual_items ) );

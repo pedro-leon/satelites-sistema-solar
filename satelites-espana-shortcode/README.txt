@@ -3,7 +3,7 @@ Contributors: Pedro Leon with Codex
 Tags: satelites, espana, shortcode, gcat
 Requires at least: 5.8
 Tested up to: 6.8
-Stable tag: 1.1.5
+Stable tag: 1.2.0
 License: GPL-2.0-or-later
 
 Muestra una tabla con los satelites espaciales cuyo SatState es "E" en el launch log de GCAT. (J. McDowell, planet4589.org/space/gcat)
@@ -42,4 +42,24 @@ El plugin consulta esta fuente:
 
 https://planet4589.org/space/gcat/tsv/derived/launchlog.tsv
 
-Los datos se guardan en cache en WordPress y se actualizan automaticamente una vez a la semana mediante WP-Cron. Si la tabla se visita y la ultima sincronizacion tiene mas de una semana, el shortcode fuerza una nueva sincronizacion antes de mostrarse. La fecha de actualizacion declarada por la fuente se extrae de la linea "# Updated ..." del TSV original y se muestra bajo la tabla.
+Los datos se guardan en cache en WordPress y se actualizan automaticamente una vez a la semana mediante WP-Cron. Si la tabla se visita y la ultima sincronizacion tiene mas de una semana, el shortcode sigue mostrando la cache actual y programa la descarga en segundo plano (no bloquea al visitante). Si todavia no hay ninguna cache, la primera visita si espera a la descarga inicial. La fecha de actualizacion declarada por la fuente se extrae de la linea "# Updated ..." del TSV original y se muestra bajo la tabla.
+
+Las peticiones a GCAT son condicionales (If-None-Match / If-Modified-Since): si la fuente no ha cambiado desde la ultima descarga, responde 304 y no se reenvia el TSV completo.
+
+Si una sincronizacion falla, se conserva la ultima cache valida y se muestra un aviso con el motivo del fallo en Ajustes > Satelites Espana.
+
+Si un satelite anadido manualmente coincide en "Pieza" con uno que GCAT termina publicando oficialmente, se muestra solo la version de GCAT.
+
+== Changelog ==
+
+= 1.2.0 =
+* La actualizacion semanal ya no bloquea la carga de la pagina para el visitante: se sirve la cache actual y la descarga se programa en segundo plano.
+* Se muestra un aviso en el admin cuando falla una sincronizacion con GCAT.
+* Peticiones condicionales a GCAT (ETag / Last-Modified) para no volver a descargar el TSV si no ha cambiado.
+* El CSS del shortcode se imprime una sola vez por pagina, aunque se use el shortcode varias veces.
+* Enlace a GCAT con rel="noopener noreferrer".
+* Los satelites manuales se ocultan automaticamente si GCAT publica la misma pieza.
+* Se anade uninstall.php para borrar las opciones del plugin al desinstalarlo.
+
+= 1.1.5 =
+* Version inicial publicada en este repositorio.
