@@ -1,0 +1,73 @@
+.set-admin-wrap .set-admin-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	border-radius: 50%;
+	background: var( --set-badge-color, #888888 );
+	color: #fff;
+	font-size: 12px;
+	line-height: 1;
+}
+
+.set-admin-swatch {
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+	border-radius: 3px;
+	border: 1px solid rgba( 0, 0, 0, 0.2 );
+	vertical-align: middle;
+	margin-right: 0.3em;
+}
+
+.set-admin-filters {
+	margin: 1em 0;
+}
+
+.set-admin-filters .search-box {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.6em;
+}
+
+.set-admin-count {
+	color: #646970;
+}
+
+.set-admin-table {
+	margin-top: 0.5em;
+}
+
+.set-admin-table th,
+.set-admin-table td {
+	vertical-align: middle;
+}
+
+.set-admin-pagination {
+	display: flex;
+	gap: 0.5em;
+	align-items: center;
+}
+
+.set-admin-tools {
+	max-width: 720px;
+}
+
+.set-admin-reset-form {
+	margin-top: 1em;
+	padding: 1em;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+}
+
+.set-admin-reset-form label {
+	display: block;
+	margin-bottom: 0.75em;
+}
+
+.set-admin-form .form-table th {
+	width: 200px;
+}

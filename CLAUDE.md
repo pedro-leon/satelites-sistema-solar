@@ -20,18 +20,54 @@ pueda retomar el trabajo en curso sin perder contexto.
   vista alternativa de "Listado" (tabla ordenable por nombre, agencia,
   destino, año de lanzamiento/fin o estado), con un botón para alternar
   entre ambas vistas; buscador, filtro por destino y "solo activas" se
-  aplican a las dos. Ver su propio `readme.txt` para el detalle de
+  aplican a las dos. Desde la v0.5.0 tiene además un panel de
+  administración completo (menú "Sondas Espaciales") para gestionar
+  sondas y destinos. Ver su propio `readme.txt` para el detalle de
   versión/changelog.
 
-## Estado de los datos (sondas-espaciales-timeline)
+## Modelo de datos (sondas-espaciales-timeline, desde v0.5.0)
 
-A fecha de la última sesión: **235 sondas** en
-`includes/data/probes.php` (v0.4.0). Desglose aproximado por destino:
+Los datos **ya no son ficheros PHP estáticos**: viven en dos tablas
+propias de la base de datos de WordPress, `{prefix}set_probes` y
+`{prefix}set_destinations`, creadas con `dbDelta()` en
+`SET_Activator::activate()` (hook de activación del plugin, y también
+comprobado en cada carga vía `plugins_loaded` por si la versión del
+esquema — constante `SET_DB_VERSION` — cambia). Toda la lectura/escritura
+pasa por `SET_Data_Store` (`includes/class-set-data-store.php`); ni el
+shortcode ni el admin tocan `$wpdb` directamente.
+
+- `includes/data/probes.php` y `includes/data/destinations.php` **siguen
+  existiendo**, pero ahora son solo la "semilla de fábrica": se usan para
+  poblar las tablas la primera vez (`SET_Data_Store::maybe_seed_defaults()`)
+  y para el botón "Restaurar valores de fábrica" del panel
+  (`SET_Data_Store::reset_to_defaults()`, que trunca ambas tablas y
+  vuelve a sembrar). **No se editan a mano en el día a día** — para eso
+  está el panel de administración.
+- El panel de administración (menú "Sondas Espaciales" en wp-admin) tiene
+  dos pantallas: "Sondas" (`SET_Admin_Probes`) y "Destinos"
+  (`SET_Admin_Destinations`), cada una con listado
+  buscable/filtrable/ordenable/paginado y formularios de alta/edición
+  (con validación server-side; los errores se guardan en un transient y
+  se muestran al volver al formulario, conservando lo ya escrito).
+  Borrar un destino que todavía usa alguna sonda está bloqueado.
+  Renombrar el `id` de un destino reasigna automáticamente las sondas que
+  lo usaban (el `id` de una sonda, en cambio, no se puede cambiar una vez
+  creada, para simplificar).
+- Cada pantalla tiene un botón "Exportar a PHP" que descarga un fichero
+  con el mismo formato que `includes/data/probes.php` /
+  `destinations.php` — es la forma de volver a versionar en git una
+  instantánea de los datos si el usuario lo pide (por ejemplo, para
+  hacer commit de una remesa grande de altas hechas desde el panel).
+- `uninstall.php` borra las dos tablas; una simple desactivación no
+  toca nada.
+
+A fecha de la última sesión: **235 sondas** en la semilla de fábrica
+(`includes/data/probes.php`, v0.5.0). Desglose aproximado por destino:
 Luna 89, Marte 51, Venus 40, heliofísica 15, asteroide 12, cometa 9,
 Júpiter 5, Sol 4, Mercurio 3, múltiple 3, Saturno 2, interestelar 2.
 
 Fuentes de Wikipedia (en inglés) ya procesadas por completo — **no hace
-falta volver a pedirlas**, ya están incorporadas:
+falta volver a pedirlas**, ya están incorporadas a la semilla de fábrica:
 - "List of Solar System probes" (versión completa, ~44 páginas en PDF):
   Sol, Mercurio, Venus, Marte, Júpiter, Saturno, Titán, Urano, Neptuno,
   Plutón, cometas, cinturón de Kuiper — todo cubierto.
@@ -49,7 +85,21 @@ Júpiter, Saturno, planetas exteriores, asteroides o cometas (aunque la
 lista completa de "Solar System probes" ya cubre razonablemente esas
 categorías, así que el margen de mejora ahí es menor que en Marte/Luna).
 
-## Convenciones de `includes/data/probes.php`
+## Si el usuario pide ampliar/corregir sondas a partir de una fuente nueva
+
+Como los datos ya no están en el PHP, el flujo cambia respecto a antes:
+la forma más directa es hacerlo **a través del panel de administración**
+si hay un WordPress real disponible; si se está trabajando solo en este
+repo (sin WordPress), lo más práctico sigue siendo editar
+`includes/data/probes.php`/`destinations.php` (mismo formato de
+siempre — ver convenciones más abajo) y avisar al usuario de que, para
+que los cambios lleguen a su sitio ya instalado, tocará o bien volver a
+activar el plugin sobre una base de datos limpia, o bien usar el botón
+"Restaurar valores de fábrica" del panel (que sobreescribe cualquier
+edición manual que el usuario haya hecho desde el propio panel, así que
+hay que avisarle antes de sugerirlo).
+
+### Convenciones de `includes/data/probes.php` (semilla de fábrica)
 
 - Un array por sonda: `id` (slug único), `name`, `agency`,
   `destination` (clave de `includes/data/destinations.php`),
@@ -75,25 +125,30 @@ categorías, así que el margen de mejora ahí es menor que en Marte/Luna).
 - Los años del eje X se recalculan solos en el shortcode
   (`SET_TIMELINE_START_YEAR` = 1959; el año final es el actual).
 
-## Flujo de trabajo para añadir/corregir sondas
+### Comprobación de un lote grande de cambios
 
 1. Leer el PDF con `Read` + `pages` (máx. 20 páginas por llamada).
 2. Antes de añadir, comprobar duplicados: `grep` por nombre en
    `includes/data/probes.php`.
-3. Validar tras cada edición grande:
-   `php -l includes/data/probes.php`, y un script PHP rápido que cargue
-   el array con `ABSPATH` definido (el fichero hace `exit` si no lo
-   está) para comprobar IDs duplicados y destinos inválidos.
-4. Comprobación visual: no hay build ni entorno WordPress en este repo,
-   así que para previsualizar el shortcode se ha usado un script PHP
-   suelto en el scratchpad de la sesión que define stubs mínimos de
-   funciones de WordPress (`esc_html`, `__`, `wp_unique_id`,
-   `current_datetime`...), incluye `class-set-data-store.php` y
-   `class-set-shortcode.php`, y vuelca el HTML+CSS+JS a un fichero para
-   abrirlo con Playwright/Chromium (`/opt/pw-browsers/chromium`, vía
-   `NODE_PATH=/opt/node22/lib/node_modules`). Ese script no está en el
-   repo (era solo del scratchpad); si hace falta, se puede recrear en
-   dos minutos siguiendo ese patrón.
-5. Subir siempre a la rama `claude/space-probes-timeline-plugin-9cj5wu`
+3. `php -l` sobre todos los ficheros tocados.
+4. Verificación funcional real (no solo sintaxis): en el scratchpad de la
+   sesión se ha montado un `$wpdb` falso respaldado por SQLite de verdad
+   (vía `PDO`), con stubs de las funciones de WordPress necesarias
+   (`sanitize_*`, `current_user_can`, `wp_nonce_*`, `add_query_arg`,
+   `get_transient`/`set_transient`, `wp_safe_redirect` capturado como
+   excepción para poder probar los `admin_post_*` sin matar el proceso,
+   etc.). Con eso se puede llamar directamente a
+   `SET_Data_Store::maybe_seed_defaults()`, `query_probes()`,
+   `save_probe()`, `save_destination()`, y a los `handle_*` del admin,
+   y comprobar de verdad el SQL generado, no solo que el PHP no falle.
+   Ese arnés no está en el repo (era solo del scratchpad); si hace
+   falta, se puede recrear en unos minutos siguiendo ese patrón
+   (`Fake_WPDB` sobre `new PDO('sqlite::memory:')`).
+5. Comprobación visual: renderizar el HTML (shortcode o pantallas del
+   admin) a un fichero con el mismo arnés de stubs y abrirlo con
+   Playwright/Chromium (`/opt/pw-browsers/chromium`, vía
+   `NODE_PATH=/opt/node22/lib/node_modules`) para hacer capturas.
+6. Subir siempre a la rama `claude/space-probes-timeline-plugin-9cj5wu`
    (nunca a `master` directamente), actualizando versión en
-   `sondas-espaciales-timeline.php` y el changelog de `readme.txt`.
+   `sondas-espaciales-timeline.php` (constantes `SET_VERSION` y
+   `SET_DB_VERSION` si cambia el esquema) y el changelog de `readme.txt`.

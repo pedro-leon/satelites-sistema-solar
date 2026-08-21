@@ -84,20 +84,6 @@ class SET_Shortcode {
 	}
 
 	/**
-	 * Devuelve las etiquetas legibles de cada estado de misión.
-	 *
-	 * @return array
-	 */
-	private static function get_status_labels() {
-		return array(
-			'activa'     => __( 'Activa', 'sondas-espaciales-timeline' ),
-			'finalizada' => __( 'Finalizada', 'sondas-espaciales-timeline' ),
-			'perdida'    => __( 'Contacto perdido', 'sondas-espaciales-timeline' ),
-			'fallida'    => __( 'Fallida', 'sondas-espaciales-timeline' ),
-		);
-	}
-
-	/**
 	 * Construye el texto del tooltip de una sonda.
 	 *
 	 * @param array $probe        Datos de la sonda.
@@ -106,7 +92,7 @@ class SET_Shortcode {
 	 */
 	private static function build_tooltip( $probe, $destinations ) {
 		$destination_label = $destinations[ $probe['destination'] ]['label'] ?? $probe['destination'];
-		$status_labels     = self::get_status_labels();
+		$status_labels     = SET_Data_Store::get_status_labels();
 
 		$lines   = array();
 		$lines[] = trim( $probe['name'] . ( ! empty( $probe['agency'] ) ? ' — ' . $probe['agency'] : '' ) );
@@ -148,7 +134,7 @@ class SET_Shortcode {
 	public static function render() {
 		$probes         = SET_Data_Store::get_probes();
 		$destinations   = SET_Data_Store::get_destinations();
-		$status_labels  = self::get_status_labels();
+		$status_labels  = SET_Data_Store::get_status_labels();
 		$start_year     = SET_TIMELINE_START_YEAR;
 		$today_frac     = self::get_today_fraction();
 		$end_year       = (int) ceil( $today_frac );

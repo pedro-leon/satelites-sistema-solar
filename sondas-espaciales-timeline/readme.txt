@@ -4,7 +4,7 @@ Tags: sondas, espacio, astronomia, linea de tiempo, exploracion espacial
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.4.0
+Stable tag: 0.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,29 +35,41 @@ El bloque es navegable mediante las barras de desplazamiento del propio navegado
 
 El buscador, el filtro por destino y la casilla de "solo activas" se aplican por igual a las dos vistas.
 
-Los datos de las sondas son estáticos y se mantienen en `includes/data/probes.php`: es un fichero pensado para ampliarse y corregirse con el tiempo, añadiendo nuevas misiones o completando las existentes. Los destinos disponibles (con su icono y color) están en `includes/data/destinations.php`.
+Los datos de las sondas y de los destinos viven en dos tablas propias de la base de datos (`wp_set_probes` y `wp_set_destinations`), gestionables por completo desde un panel de administración: **Sondas Espaciales** en el menú de WordPress, con dos pantallas — "Sondas" y "Destinos" — para añadir, editar y borrar registros, buscar, filtrar y ordenar. También se puede restaurar todo a los valores de fábrica del plugin, o exportar los datos actuales a un fichero PHP (útil para guardar una copia en el repositorio).
+
+Las tablas se crean automáticamente al activar el plugin, y se siembran con los datos de fábrica de `includes/data/probes.php` y `includes/data/destinations.php` la primera vez (esos ficheros siguen en el repositorio como semilla inicial y como formato de exportación, pero ya no son la fuente de datos en caliente).
 
 == Installation ==
 
 1. Sube la carpeta `sondas-espaciales-timeline` a `/wp-content/plugins/`.
-2. Activa el plugin desde el menú "Plugins" de WordPress.
+2. Activa el plugin desde el menú "Plugins" de WordPress (esto crea las tablas propias y las siembra con los datos de fábrica).
 3. Añade el shortcode `[sondas_espaciales_timeline]` a cualquier página o entrada.
+4. Gestiona las sondas y los destinos desde el menú "Sondas Espaciales" del panel de administración.
 
 == Frequently Asked Questions ==
 
 = ¿De dónde vienen los datos de las sondas? =
 
-Es un listado curado manualmente (no proviene de ninguna API), pensado como punto de partida. Los años de lanzamiento y fin de misión pueden contener imprecisiones y se irán revisando y ampliando con el tiempo.
+Es un listado curado manualmente (no proviene de ninguna API), pensado como punto de partida. Los años de lanzamiento y fin de misión pueden contener imprecisiones y se pueden corregir en cualquier momento desde el panel de administración.
 
-= ¿Cómo añado o corrijo una sonda? =
+= ¿Cómo añado, corrijo o borro una sonda? =
 
-Editando el array que devuelve `includes/data/probes.php`. Cada sonda es un elemento con: id, name, agency, destination (clave de `destinations.php`), launch_year, end_year (null si sigue activa), status (`activa`, `finalizada`, `perdida` o `fallida`) y una nota opcional.
+Desde el menú "Sondas Espaciales" → "Sondas" del panel de administración: hay botones para añadir una sonda nueva, y enlaces de "Editar"/"Borrar" en cada fila del listado.
 
 = ¿Cómo añado un destino nuevo (por ejemplo, un cometa concreto)? =
 
-Añadiendo una entrada nueva en `includes/data/destinations.php` con su etiqueta, un símbolo (código) y un color; se usará automáticamente en el icono de las sondas y en la leyenda.
+Desde "Sondas Espaciales" → "Destinos", con su etiqueta, un símbolo corto y un color (hay un selector de color). No se puede borrar un destino mientras alguna sonda lo esté usando.
+
+= Si desinstalo el plugin, ¿pierdo mis datos? =
+
+Al desactivarlo no se pierde nada. Al desinstalarlo desde el panel de administración sí se borran las tablas propias (`wp_set_probes` y `wp_set_destinations`); si quieres conservar una copia antes, usa el botón "Exportar a PHP" de cada pantalla.
 
 == Changelog ==
+
+= 0.5.0 =
+* Añadido un panel de administración completo ("Sondas Espaciales" en el menú de WordPress) para añadir, editar y borrar sondas y destinos, con búsqueda, filtros, orden y paginación.
+* Los datos pasan de ficheros PHP estáticos a dos tablas propias de la base de datos (`wp_set_probes`, `wp_set_destinations`), creadas y sembradas automáticamente al activar el plugin.
+* Añadidos botones de "Restaurar valores de fábrica" y "Exportar a PHP" (mismo formato que `includes/data/probes.php`/`destinations.php`), para poder seguir guardando copias en el repositorio si se quiere.
 
 = 0.4.0 =
 * Añadida una vista de "Listado": una tabla con todas las misiones, ordenable por nombre, agencia, destino, año de lanzamiento, año de fin o estado. Se alterna con la vista de gráfico mediante dos botones en la parte superior.
