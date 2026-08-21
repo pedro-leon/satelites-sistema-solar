@@ -22,8 +22,26 @@ pueda retomar el trabajo en curso sin perder contexto.
   entre ambas vistas; buscador, filtro por destino y "solo activas" se
   aplican a las dos. Desde la v0.5.0 tiene además un panel de
   administración completo (menú "Sondas Espaciales") para gestionar
-  sondas y destinos. Ver su propio `readme.txt` para el detalle de
+  sondas y destinos. Desde la v0.6.0, además del año de lanzamiento/fin,
+  cada sonda puede tener la fecha completa (día/mes/año), visible en la
+  tabla del listado y en el panel de admin (el tooltip del gráfico al
+  pasar el ratón por las barras se deja tal cual, a petición expresa del
+  usuario — no tocarlo). Ver su propio `readme.txt` para el detalle de
   versión/changelog.
+
+  **Pendiente (pedido por el usuario, aún sin empezar):** soporte de
+  multi-destino con fecha por sonda — sondas como Voyager 1, Voyager 2,
+  Pioneer 10, Pioneer 11 o New Horizons pasan por varios destinos
+  (p. ej. Júpiter → Saturno → Urano → Neptuno), cada uno con su propia
+  fecha de sobrevuelo/llegada, tal y como aparecen desglosados en los
+  PDF de Wikipedia. Habrá que: una tabla nueva de waypoints
+  (probe_id, destination, date, orden), extender `SET_Data_Store`,
+  añadir filas repetibles (añadir/quitar) en el formulario de sonda del
+  admin, y decidir cómo se pintan en el gráfico (¿icono extra en la
+  barra por cada destino intermedio?) y en la tabla de listado. El
+  campo `destination` actual de la sonda seguiría siendo el destino
+  "principal" (icono junto al nombre, filtro por destino); los
+  waypoints serían un desglose adicional opcional.
 
 ## Modelo de datos (sondas-espaciales-timeline, desde v0.5.0)
 
@@ -62,9 +80,33 @@ shortcode ni el admin tocan `$wpdb` directamente.
   toca nada.
 
 A fecha de la última sesión: **235 sondas** en la semilla de fábrica
-(`includes/data/probes.php`, v0.5.0). Desglose aproximado por destino:
+(`includes/data/probes.php`, v0.6.0; el número de sondas no cambió en la
+v0.6.0, solo se completaron fechas). Desglose aproximado por destino:
 Luna 89, Marte 51, Venus 40, heliofísica 15, asteroide 12, cometa 9,
 Júpiter 5, Sol 4, Mercurio 3, múltiple 3, Saturno 2, interestelar 2.
+
+### Fechas completas (`launch_date`/`end_date`, desde v0.6.0)
+
+Columnas `DATE NULL` en `wp_set_probes`, opcionales (muchas sondas solo
+tienen año). `SET_Data_Store::format_date( $date, $fallback_year )`
+centraliza el formateo (`d/m/Y` si hay fecha completa, si no el año, si
+no un guion) y se usa tanto en el admin como en la tabla de listado del
+shortcode. **El tooltip del gráfico no usa `format_date` y no se debe
+tocar** — el usuario confirmó explícitamente que esa parte ya le vale
+como está.
+
+Al extraer fechas de los PDF hay que distinguir con cuidado:
+- **Fallo de lanzamiento** (la sonda no llegó a escapar de la órbita
+  terrestre, o falló nada más despegar): la única fecha de la fila de
+  Wikipedia coincide con la fecha real de lanzamiento → usable como
+  `launch_date`.
+- **Cualquier otro evento** (sobrevuelo, inserción orbital, aterrizaje,
+  pérdida de contacto en ruta): la fecha de la fila es la fecha de ESE
+  evento, no la de lanzamiento. Si esa fecha coincide con el `end_year`
+  ya registrado, es razonable usarla como `end_date`; nunca usarla como
+  `launch_date`.
+- "List of missions to Mars" es la excepción: tiene una columna "Launch
+  date" dedicada y fiable, no hace falta aplicar esta distinción ahí.
 
 Fuentes de Wikipedia (en inglés) ya procesadas por completo — **no hace
 falta volver a pedirlas**, ya están incorporadas a la semilla de fábrica:

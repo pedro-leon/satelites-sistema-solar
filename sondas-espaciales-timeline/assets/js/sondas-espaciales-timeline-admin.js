@@ -16,10 +16,12 @@
 			$( '.set-admin-color-field' ).wpColorPicker();
 		}
 
-		// En el formulario de sondas, ocultar/exigir el año de fin según el estado.
+		// En el formulario de sondas, ocultar/exigir el fin de misión (año y
+		// fecha completa) según el estado.
 		var statusField  = $( '#set-status' );
 		var endYearRow   = $( '.set-admin-end-year-row' );
 		var endYearField = $( '#set-end-year' );
+		var endDateField = $( '#set-end-date' );
 
 		function toggleEndYear() {
 			if ( ! statusField.length ) {
@@ -33,6 +35,7 @@
 
 			if ( isActive ) {
 				endYearField.val( '' );
+				endDateField.val( '' );
 			}
 		}
 

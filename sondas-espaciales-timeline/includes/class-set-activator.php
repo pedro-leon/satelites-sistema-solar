@@ -52,6 +52,8 @@ class SET_Activator {
 			destination VARCHAR(32) NOT NULL,
 			launch_year SMALLINT NOT NULL,
 			end_year SMALLINT NULL,
+			launch_date DATE NULL,
+			end_date DATE NULL,
 			status VARCHAR(16) NOT NULL,
 			note TEXT NULL,
 			updated_at DATETIME NOT NULL,

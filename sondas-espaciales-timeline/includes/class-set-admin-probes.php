@@ -182,8 +182,8 @@ class SET_Admin_Probes {
 							<td><a href="<?php echo esc_url( $edit_url ); ?>"><strong><?php echo esc_html( $probe['name'] ); ?></strong></a></td>
 							<td><?php echo esc_html( $probe['agency'] ); ?></td>
 							<td><?php echo esc_html( $destination_data['label'] ); ?></td>
-							<td><?php echo (int) $probe['launch_year']; ?></td>
-							<td><?php echo $probe['end_year'] ? (int) $probe['end_year'] : '—'; ?></td>
+							<td><?php echo esc_html( SET_Data_Store::format_date( $probe['launch_date'], $probe['launch_year'] ) ); ?></td>
+							<td><?php echo esc_html( SET_Data_Store::format_date( $probe['end_date'], $probe['end_year'] ) ); ?></td>
 							<td><?php echo esc_html( $status_labels[ $probe['status'] ] ?? $probe['status'] ); ?></td>
 							<td>
 								<a href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Editar', 'sondas-espaciales-timeline' ); ?></a>
@@ -256,6 +256,8 @@ class SET_Admin_Probes {
 			'destination' => '',
 			'launch_year' => '',
 			'end_year'    => '',
+			'launch_date' => '',
+			'end_date'    => '',
 			'status'      => 'finalizada',
 			'note'        => '',
 		);
@@ -320,6 +322,13 @@ class SET_Admin_Probes {
 						<td><input type="number" id="set-launch-year" name="launch_year" value="<?php echo esc_attr( $values['launch_year'] ); ?>" class="small-text" min="1957" max="<?php echo esc_attr( (int) current_time( 'Y' ) + 15 ); ?>" required /></td>
 					</tr>
 					<tr>
+						<th><label for="set-launch-date"><?php esc_html_e( 'Fecha de lanzamiento', 'sondas-espaciales-timeline' ); ?></label></th>
+						<td>
+							<input type="date" id="set-launch-date" name="launch_date" value="<?php echo esc_attr( $values['launch_date'] ?? '' ); ?>" />
+							<p class="description"><?php esc_html_e( 'Opcional. Si la rellenas, el año debe coincidir con el año de lanzamiento de arriba.', 'sondas-espaciales-timeline' ); ?></p>
+						</td>
+					</tr>
+					<tr>
 						<th><label for="set-status"><?php esc_html_e( 'Estado', 'sondas-espaciales-timeline' ); ?></label></th>
 						<td>
 							<select id="set-status" name="status" required>
@@ -336,6 +345,13 @@ class SET_Admin_Probes {
 							<p class="description"><?php esc_html_e( 'Déjalo en blanco si el estado es "Activa": la línea de tiempo dibujará la barra hasta hoy.', 'sondas-espaciales-timeline' ); ?></p>
 						</td>
 					</tr>
+					<tr class="set-admin-end-year-row">
+						<th><label for="set-end-date"><?php esc_html_e( 'Fecha de fin', 'sondas-espaciales-timeline' ); ?></label></th>
+						<td>
+							<input type="date" id="set-end-date" name="end_date" value="<?php echo esc_attr( $values['end_date'] ?? '' ); ?>" />
+							<p class="description"><?php esc_html_e( 'Opcional. Si la rellenas, el año debe coincidir con el año de fin de arriba.', 'sondas-espaciales-timeline' ); ?></p>
+						</td>
+					</tr>
 					<tr>
 						<th><label for="set-note"><?php esc_html_e( 'Nota', 'sondas-espaciales-timeline' ); ?></label></th>
 						<td><textarea id="set-note" name="note" rows="3" class="large-text"><?php echo esc_textarea( $values['note'] ); ?></textarea></td>
@@ -347,6 +363,28 @@ class SET_Admin_Probes {
 			</form>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Valida y normaliza una fecha recibida de un <input type="date">.
+	 *
+	 * @param string $raw Valor tal cual llega en $_POST.
+	 * @return string|null Fecha en formato Y-m-d, o null si está vacía o no es válida.
+	 */
+	private static function sanitize_date( $raw ) {
+		$raw = sanitize_text_field( wp_unslash( $raw ) );
+
+		if ( '' === $raw ) {
+			return null;
+		}
+
+		if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $raw ) ) {
+			return null;
+		}
+
+		list( $year, $month, $day ) = array_map( 'intval', explode( '-', $raw ) );
+
+		return checkdate( $month, $day, $year ) ? $raw : null;
 	}
 
 	/**
@@ -390,12 +428,15 @@ class SET_Admin_Probes {
 		$destination = sanitize_key( wp_unslash( $_POST['destination'] ?? '' ) );
 		$launch_year = isset( $_POST['launch_year'] ) ? (int) $_POST['launch_year'] : 0;
 		$status      = sanitize_key( wp_unslash( $_POST['status'] ?? '' ) );
-		$end_year_in = isset( $_POST['end_year'] ) ? trim( wp_unslash( $_POST['end_year'] ) ) : '';
-		$end_year    = ( '' === $end_year_in ) ? null : (int) $end_year_in;
-		$note        = sanitize_textarea_field( wp_unslash( $_POST['note'] ?? '' ) );
+		$end_year_in  = isset( $_POST['end_year'] ) ? trim( wp_unslash( $_POST['end_year'] ) ) : '';
+		$end_year     = ( '' === $end_year_in ) ? null : (int) $end_year_in;
+		$launch_date  = self::sanitize_date( $_POST['launch_date'] ?? '' );
+		$end_date     = self::sanitize_date( $_POST['end_date'] ?? '' );
+		$note         = sanitize_textarea_field( wp_unslash( $_POST['note'] ?? '' ) );
 
 		if ( 'activa' === $status ) {
 			$end_year = null;
+			$end_date = null;
 		}
 
 		$destinations = SET_Data_Store::get_destinations();
@@ -429,7 +470,15 @@ class SET_Admin_Probes {
 			$errors[] = __( 'El año de fin no puede ser anterior al de lanzamiento.', 'sondas-espaciales-timeline' );
 		}
 
-		$values = compact( 'id', 'name', 'agency', 'destination', 'launch_year', 'end_year', 'status', 'note' );
+		if ( null !== $launch_date && (int) gmdate( 'Y', strtotime( $launch_date ) ) !== $launch_year ) {
+			$errors[] = __( 'El año de la fecha de lanzamiento no coincide con el año de lanzamiento indicado.', 'sondas-espaciales-timeline' );
+		}
+
+		if ( null !== $end_date && null !== $end_year && (int) gmdate( 'Y', strtotime( $end_date ) ) !== $end_year ) {
+			$errors[] = __( 'El año de la fecha de fin no coincide con el año de fin indicado.', 'sondas-espaciales-timeline' );
+		}
+
+		$values = compact( 'id', 'name', 'agency', 'destination', 'launch_year', 'end_year', 'launch_date', 'end_date', 'status', 'note' );
 
 		if ( $errors ) {
 			set_transient(
@@ -549,6 +598,8 @@ class SET_Admin_Probes {
 			$lines[] = "\t\t'destination' => " . var_export( $probe['destination'], true ) . ',';
 			$lines[] = "\t\t'launch_year' => " . (int) $probe['launch_year'] . ',';
 			$lines[] = "\t\t'end_year'    => " . ( null === $probe['end_year'] ? 'null' : (int) $probe['end_year'] ) . ',';
+			$lines[] = "\t\t'launch_date' => " . ( empty( $probe['launch_date'] ) ? 'null' : var_export( $probe['launch_date'], true ) ) . ',';
+			$lines[] = "\t\t'end_date'    => " . ( empty( $probe['end_date'] ) ? 'null' : var_export( $probe['end_date'], true ) ) . ',';
 			$lines[] = "\t\t'status'      => " . var_export( $probe['status'], true ) . ',';
 			$lines[] = "\t\t'note'        => " . var_export( $probe['note'], true ) . ',';
 			$lines[] = "\t),";

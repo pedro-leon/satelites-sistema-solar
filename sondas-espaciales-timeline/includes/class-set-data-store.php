@@ -86,9 +86,30 @@ class SET_Data_Store {
 			'destination' => $row['destination'],
 			'launch_year' => (int) $row['launch_year'],
 			'end_year'    => ( null === $row['end_year'] || '' === $row['end_year'] ) ? null : (int) $row['end_year'],
+			'launch_date' => ( empty( $row['launch_date'] ) ) ? null : $row['launch_date'],
+			'end_date'    => ( empty( $row['end_date'] ) ) ? null : $row['end_date'],
 			'status'      => $row['status'],
 			'note'        => (string) $row['note'],
 		);
+	}
+
+	/**
+	 * Da formato a una fecha "Y-m-d" al estilo español (d/m/Y). Si no hay
+	 * fecha completa, cae al año que se le pase (o un guion largo).
+	 *
+	 * @param string|null $date          Fecha en formato Y-m-d, o null.
+	 * @param int|null    $fallback_year Año a mostrar si no hay fecha completa.
+	 * @return string
+	 */
+	public static function format_date( $date, $fallback_year = null ) {
+		if ( ! empty( $date ) ) {
+			$time = strtotime( $date );
+			if ( $time ) {
+				return date_i18n( 'd/m/Y', $time );
+			}
+		}
+
+		return $fallback_year ? (string) $fallback_year : '—';
 	}
 
 	/**
@@ -318,11 +339,13 @@ class SET_Data_Store {
 			'destination' => $probe['destination'],
 			'launch_year' => $probe['launch_year'],
 			'end_year'    => $probe['end_year'],
+			'launch_date' => $probe['launch_date'] ?? null,
+			'end_date'    => $probe['end_date'] ?? null,
 			'status'      => $probe['status'],
 			'note'        => $probe['note'],
 			'updated_at'  => current_time( 'mysql' ),
 		);
-		$formats = array( '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s' );
+		$formats = array( '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s' );
 
 		if ( $exists ) {
 			$wpdb->update( $table, $payload, array( 'id' => $original_id ), $formats, array( '%s' ) );
@@ -386,11 +409,13 @@ class SET_Data_Store {
 						'destination' => $probe['destination'],
 						'launch_year' => $probe['launch_year'],
 						'end_year'    => $probe['end_year'],
+						'launch_date' => $probe['launch_date'] ?? null,
+						'end_date'    => $probe['end_date'] ?? null,
 						'status'      => $probe['status'],
 						'note'        => $probe['note'],
 						'updated_at'  => current_time( 'mysql' ),
 					),
-					array( '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s' )
+					array( '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s' )
 				);
 			}
 		}

@@ -4,7 +4,7 @@ Tags: sondas, espacio, astronomia, linea de tiempo, exploracion espacial
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.5.0
+Stable tag: 0.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -65,6 +65,11 @@ Desde "Sondas Espaciales" → "Destinos", con su etiqueta, un símbolo corto y u
 Al desactivarlo no se pierde nada. Al desinstalarlo desde el panel de administración sí se borran las tablas propias (`wp_set_probes` y `wp_set_destinations`); si quieres conservar una copia antes, usa el botón "Exportar a PHP" de cada pantalla.
 
 == Changelog ==
+
+= 0.6.0 =
+* Añadida la fecha completa (día/mes/año) de lanzamiento y de fin de misión, además del año: se muestra en la tabla del listado y en el panel de administración (nuevos campos de fecha en el formulario de sondas). El tooltip del gráfico al pasar el ratón por las barras no cambia.
+* Nuevas columnas `launch_date` y `end_date` (fecha, opcionales) en la tabla `wp_set_probes`; se conservan las sondas que solo tienen año.
+* Rellenadas fechas completas de más de 70 sondas a partir de "List of missions to Mars" (columna dedicada de fecha de lanzamiento) y de las tablas de fallos de lanzamiento/fin de misión de "List of Solar System probes".
 
 = 0.5.0 =
 * Añadido un panel de administración completo ("Sondas Espaciales" en el menú de WordPress) para añadir, editar y borrar sondas y destinos, con búsqueda, filtros, orden y paginación.

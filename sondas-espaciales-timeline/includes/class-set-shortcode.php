@@ -303,8 +303,8 @@ class SET_Shortcode {
 									<td><?php echo esc_html( $probe['name'] ); ?></td>
 									<td><?php echo esc_html( $probe['agency'] ); ?></td>
 									<td><?php echo esc_html( $destination['label'] ); ?></td>
-									<td><?php echo (int) $probe['launch_year']; ?></td>
-									<td><?php echo $probe['end_year'] ? (int) $probe['end_year'] : '—'; ?></td>
+									<td><?php echo esc_html( SET_Data_Store::format_date( $probe['launch_date'], $probe['launch_year'] ) ); ?></td>
+									<td><?php echo esc_html( SET_Data_Store::format_date( $probe['end_date'], $probe['end_year'] ) ); ?></td>
 									<td><span class="set-status-pill set-status-<?php echo esc_attr( $probe['status'] ); ?>"><?php echo esc_html( $status_label ); ?></span></td>
 								</tr>
 							<?php endforeach; ?>
