@@ -4,7 +4,7 @@ Tags: sondas, espacio, astronomia, linea de tiempo, exploracion espacial
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.1.0
+Stable tag: 0.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -53,6 +53,10 @@ Editando el array que devuelve `includes/data/probes.php`. Cada sonda es un elem
 Añadiendo una entrada nueva en `includes/data/destinations.php` con su etiqueta, un símbolo (código) y un color; se usará automáticamente en el icono de las sondas y en la leyenda.
 
 == Changelog ==
+
+= 0.2.0 =
+* Ampliado el listado de sondas de ~90 a 185, contrastando datos con la tabla "List of Solar System probes" de Wikipedia (en inglés) y con Wikidata: se añaden los programas Ranger y Lunar Orbiter (Luna), las primeras misiones soviéticas a Marte (Mars/Zond/Fobos), sondas heliofísicas (WIND, SOHO, ACE, STEREO, DSCOVR...) y varias misiones de asteroides (Psyche, Hera, LICIACube, Tianwen-2), entre otras.
+* Corregidos varios años de lanzamiento/fin de misión (Mariner 10, Venus Express, Akatsuki) y se añade Curiosity, que faltaba.
 
 = 0.1.0 =
 * Primera versión: línea de tiempo con buscador, filtro por destino y zoom, y un listado inicial de varias decenas de sondas históricas.
