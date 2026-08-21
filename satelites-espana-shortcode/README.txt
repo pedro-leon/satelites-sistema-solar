@@ -3,7 +3,7 @@ Contributors: Pedro Leon with Codex
 Tags: satelites, espana, shortcode, gcat
 Requires at least: 5.8
 Tested up to: 6.8
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 License: GPL-2.0-or-later
 
 Muestra una tabla con los satelites espaciales cuyo SatState es "E" en el launch log de GCAT. (J. McDowell, planet4589.org/space/gcat)
@@ -51,6 +51,12 @@ Si una sincronizacion falla, se conserva la ultima cache valida y se muestra un 
 Si un satelite anadido manualmente coincide en "Pieza" con uno que GCAT termina publicando oficialmente, se muestra solo la version de GCAT.
 
 == Changelog ==
+
+= 1.3.0 =
+* Rediseño completo del aspecto visual: tema oscuro tipo "centro de control", tipografía monoespaciada, acentos en cian y separadores de año a modo de panel de estado.
+* Titular fijo sobre la tabla: "Listado de satélites de España lanzados al espacio hasta [año actual]".
+* La columna ID se muestra como una pequeña etiqueta/badge.
+* La tabla se envuelve en un contenedor con scroll horizontal para pantallas estrechas.
 
 = 1.2.0 =
 * La actualizacion semanal ya no bloquea la carga de la pagina para el visitante: se sirve la cache actual y la descarga se programa en segundo plano.

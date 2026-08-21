@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Satélites España Shortcode
  * Description: Muestra mediante shortcode una tabla de satélites espaciales asociados a España según GCAT.
- * Version: 1.2.0
+ * Version: 1.3.0
  * Author: Pedro León with Codex
  * License: GPL-2.0-or-later
  * Text Domain: satelites-espana-shortcode
@@ -145,6 +145,13 @@ final class Satelites_Espana_Shortcode {
 	 */
 	public static function render_shortcode(): string {
 		/*
+		 * El CSS del shortcode se imprime una sola vez en el footer, aunque el
+		 * shortcode se use varias veces en la misma pagina o no haya datos
+		 * todavia (caso del mensaje vacio, mas abajo).
+		 */
+		self::maybe_hook_footer_styles();
+
+		/*
 		 * La cache automatica se revisa por separado de los registros manuales.
 		 * Los manuales no deben provocar descargas ni borrarse si GCAT falla.
 		 */
@@ -178,9 +185,16 @@ final class Satelites_Espana_Shortcode {
 		 */
 		$items = self::get_display_items();
 
+		/* Titular fijo sobre la tabla, con el ano actual segun la zona horaria del sitio. */
+		$heading = sprintf(
+			/* translators: %s: current year. */
+			esc_html__( 'Listado de satélites de España lanzados al espacio hasta %s', 'satelites-espana-shortcode' ),
+			esc_html( current_time( 'Y' ) )
+		);
+
 		if ( empty( $items ) ) {
 			/* Caso extremo: no hay cache util ni registros manuales que mostrar. */
-			return '<p class="satelites-espana-empty">' . esc_html__( 'No hay datos disponibles de satélites españoles en este momento.', 'satelites-espana-shortcode' ) . '</p>';
+			return '<div class="satelites-espana-wrapper"><h3 class="satelites-espana-heading">' . $heading . '</h3><p class="satelites-espana-empty">' . esc_html__( 'No hay datos disponibles de satélites españoles en este momento.', 'satelites-espana-shortcode' ) . '</p></div>';
 		}
 
 		/*
@@ -191,18 +205,14 @@ final class Satelites_Espana_Shortcode {
 		$last_sync      = get_option( self::OPTION_LAST_SYNC, '' );
 
 		/*
-		 * El CSS del shortcode se imprime una sola vez en el footer, aunque el
-		 * shortcode se use varias veces en la misma pagina.
-		 */
-		self::maybe_hook_footer_styles();
-
-		/*
 		 * Se usa buffer de salida para poder escribir HTML mezclado con PHP de
 		 * forma legible y devolverlo como string, que es lo que espera un shortcode.
 		 */
 		ob_start();
 		?>
 		<div class="satelites-espana-wrapper">
+			<h3 class="satelites-espana-heading"><?php echo $heading; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- ya escapado arriba con esc_html(). ?></h3>
+			<div class="satelites-espana-table-wrapper">
 			<table class="satelites-espana-table">
 				<thead>
 					<tr>
@@ -246,7 +256,7 @@ final class Satelites_Espana_Shortcode {
 							<!-- El indice pertenece al array de satelites, no a las filas separadoras. -->
 							<td><?php echo esc_html( (string) ( $index + 1 ) ); ?></td>
 							<td><?php echo esc_html( self::format_launch_date( $item['launch_date'] ?? '' ) ); ?></td>
-							<td><?php echo esc_html( $item['piece'] ?? '' ); ?></td>
+							<td><span class="satelites-espana-piece"><?php echo esc_html( $item['piece'] ?? '' ); ?></span></td>
 							<td><?php echo esc_html( $item['name'] ?? '' ); ?></td>
 							<td><?php echo esc_html( $item['sat_owner'] ?? '' ); ?></td>
 							<td><?php echo esc_html( $item['launch_vehicle'] ?? '' ); ?></td>
@@ -254,6 +264,7 @@ final class Satelites_Espana_Shortcode {
 					<?php endforeach; ?>
 				</tbody>
 			</table>
+			</div>
 
 			<?php if ( $source_updated || $last_sync ) : ?>
 				<p class="satelites-espana-meta">
@@ -331,14 +342,110 @@ final class Satelites_Espana_Shortcode {
 		?>
 		<style>
 			/*
-			 * CSS embebido y acotado al shortcode: garantiza que la fila de
-			 * ano destaque aunque el tema activo no aporte estilos propios.
+			 * CSS embebido y acotado al shortcode: no depende del tema activo.
+			 * Estilo "centro de control" oscuro, con tipografia monoespaciada,
+			 * inspirado en paneles de estado de misiones espaciales.
 			 */
-			.satelites-espana-table .satelites-espana-year-row th {
-				background: #1f2937;
-				color: #ffffff;
+			.satelites-espana-wrapper {
+				--ses-bg: #0b0f19;
+				--ses-panel: #111827;
+				--ses-panel-alt: #161f30;
+				--ses-border: #232f42;
+				--ses-text: #e2e8f0;
+				--ses-text-muted: #8896ab;
+				--ses-accent: #22d3ee;
+				--ses-accent-strong: #67e8f9;
+
+				background: var(--ses-bg);
+				color: var(--ses-text);
+				padding: 1.5em;
+				border: 1px solid var(--ses-border);
+				border-radius: 10px;
+				font-family: ui-monospace, "SFMono-Regular", "JetBrains Mono", "Space Mono", Menlo, Consolas, monospace;
+				font-size: 14px;
+				line-height: 1.5;
+			}
+
+			.satelites-espana-heading {
+				margin: 0 0 1em;
+				padding-bottom: 0.75em;
+				border-bottom: 1px solid var(--ses-border);
+				color: var(--ses-accent-strong);
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				font-size: 1em;
 				font-weight: 700;
+			}
+
+			.satelites-espana-wrapper .satelites-espana-empty {
+				color: var(--ses-text-muted);
+				font-style: italic;
+			}
+
+			.satelites-espana-table-wrapper {
+				overflow-x: auto;
+			}
+
+			.satelites-espana-table {
+				width: 100%;
+				border-collapse: collapse;
+				min-width: 720px;
+			}
+
+			.satelites-espana-table thead th {
+				background: var(--ses-panel-alt);
+				color: var(--ses-text-muted);
+				text-transform: uppercase;
+				font-size: 0.75em;
+				letter-spacing: 0.06em;
+				padding: 0.75em 0.85em;
 				text-align: left;
+				border-bottom: 2px solid var(--ses-accent);
+				white-space: nowrap;
+			}
+
+			.satelites-espana-table td {
+				padding: 0.65em 0.85em;
+				border-bottom: 1px solid var(--ses-border);
+				color: var(--ses-text);
+			}
+
+			.satelites-espana-table tbody tr:not(.satelites-espana-year-row):hover td {
+				background: var(--ses-panel-alt);
+			}
+
+			.satelites-espana-table .satelites-espana-year-row th {
+				background: linear-gradient( 90deg, #0f2733 0%, var(--ses-bg) 100% );
+				color: var(--ses-accent-strong);
+				font-weight: 700;
+				letter-spacing: 0.06em;
+				text-align: left;
+				padding: 0.6em 0.85em;
+				border-left: 3px solid var(--ses-accent);
+				border-bottom: 1px solid var(--ses-border);
+			}
+
+			.satelites-espana-piece {
+				display: inline-block;
+				padding: 0.15em 0.55em;
+				border: 1px solid var(--ses-border);
+				border-radius: 4px;
+				background: var(--ses-panel-alt);
+				color: var(--ses-accent);
+				font-size: 0.9em;
+				white-space: nowrap;
+			}
+
+			.satelites-espana-meta {
+				margin-top: 1em;
+				padding-top: 0.75em;
+				border-top: 1px solid var(--ses-border);
+				color: var(--ses-text-muted);
+				font-size: 0.8em;
+			}
+
+			.satelites-espana-meta a {
+				color: var(--ses-accent);
 			}
 		</style>
 		<?php
