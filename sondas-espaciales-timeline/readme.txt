@@ -4,7 +4,7 @@ Tags: sondas, espacio, astronomia, linea de tiempo, exploracion espacial
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.3.0
+Stable tag: 0.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,6 +17,8 @@ Este plugin añade el shortcode `[sondas_espaciales_timeline]`, que muestra una 
 * En horizontal, los años desde 1959 (primer lanzamiento, la Luna 1) hasta la actualidad.
 * En vertical, un listado de sondas espaciales, cada una con una barra de color que empieza en su año de lanzamiento y termina cuando finalizó la misión o se perdió el contacto.
 
+También se puede cambiar a una vista de **listado**: una tabla con todas las misiones, ordenable haciendo clic en cualquier columna (nombre, agencia, destino, año de lanzamiento, año de fin o estado).
+
 Cada sonda muestra, junto a su nombre, un icono circular de color que indica su destino (Luna, Sol, Marte, Júpiter, un cometa, un asteroide...). El color de la barra corresponde a ese mismo destino, y su estilo indica el estado de la misión:
 
 * Barra sólida: misión finalizada con normalidad.
@@ -28,7 +30,10 @@ El bloque es navegable mediante las barras de desplazamiento del propio navegado
 
 * Un buscador por nombre/agencia.
 * Un filtro por destino (con una leyenda de iconos que también funciona como filtro rápido).
-* Controles de zoom para ajustar la escala temporal.
+* Una casilla para mostrar solo las misiones activas.
+* Controles de zoom para ajustar la escala temporal (vista de gráfico).
+
+El buscador, el filtro por destino y la casilla de "solo activas" se aplican por igual a las dos vistas.
 
 Los datos de las sondas son estáticos y se mantienen en `includes/data/probes.php`: es un fichero pensado para ampliarse y corregirse con el tiempo, añadiendo nuevas misiones o completando las existentes. Los destinos disponibles (con su icono y color) están en `includes/data/destinations.php`.
 
@@ -53,6 +58,10 @@ Editando el array que devuelve `includes/data/probes.php`. Cada sonda es un elem
 Añadiendo una entrada nueva en `includes/data/destinations.php` con su etiqueta, un símbolo (código) y un color; se usará automáticamente en el icono de las sondas y en la leyenda.
 
 == Changelog ==
+
+= 0.4.0 =
+* Añadida una vista de "Listado": una tabla con todas las misiones, ordenable por nombre, agencia, destino, año de lanzamiento, año de fin o estado. Se alterna con la vista de gráfico mediante dos botones en la parte superior.
+* Añadida una casilla "Solo activas" que filtra ambas vistas.
 
 = 0.3.0 =
 * Ampliado el listado de sondas de 185 a 235, a partir de los artículos completos de Wikipedia "List of Solar System probes", "List of lunar probes" y "List of missions to Mars": se completan los programas Luna, Ranger, Zond y Lunokhod (retorno de muestras y róvers soviéticos), toda la era reciente de alunizadores privados/comerciales (Beresheet, Peregrine, IM-1 Odysseus, Blue Ghost, Hakuto-R, IM-2 Athena, Luna 25...), varias sondas soviéticas tempranas a Marte, y Beagle 2, Fobos-Grunt, ESCAPADE y Suisei, entre otras.

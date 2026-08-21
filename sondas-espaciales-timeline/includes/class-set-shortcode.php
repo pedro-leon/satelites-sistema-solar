@@ -84,6 +84,20 @@ class SET_Shortcode {
 	}
 
 	/**
+	 * Devuelve las etiquetas legibles de cada estado de misión.
+	 *
+	 * @return array
+	 */
+	private static function get_status_labels() {
+		return array(
+			'activa'     => __( 'Activa', 'sondas-espaciales-timeline' ),
+			'finalizada' => __( 'Finalizada', 'sondas-espaciales-timeline' ),
+			'perdida'    => __( 'Contacto perdido', 'sondas-espaciales-timeline' ),
+			'fallida'    => __( 'Fallida', 'sondas-espaciales-timeline' ),
+		);
+	}
+
+	/**
 	 * Construye el texto del tooltip de una sonda.
 	 *
 	 * @param array $probe        Datos de la sonda.
@@ -92,13 +106,7 @@ class SET_Shortcode {
 	 */
 	private static function build_tooltip( $probe, $destinations ) {
 		$destination_label = $destinations[ $probe['destination'] ]['label'] ?? $probe['destination'];
-
-		$status_labels = array(
-			'activa'      => __( 'Misión activa', 'sondas-espaciales-timeline' ),
-			'finalizada'  => __( 'Misión finalizada', 'sondas-espaciales-timeline' ),
-			'perdida'     => __( 'Contacto perdido', 'sondas-espaciales-timeline' ),
-			'fallida'     => __( 'Misión fallida', 'sondas-espaciales-timeline' ),
-		);
+		$status_labels     = self::get_status_labels();
 
 		$lines   = array();
 		$lines[] = trim( $probe['name'] . ( ! empty( $probe['agency'] ) ? ' — ' . $probe['agency'] : '' ) );
@@ -138,24 +146,31 @@ class SET_Shortcode {
 	 * @return string
 	 */
 	public static function render() {
-		$probes        = SET_Data_Store::get_probes();
-		$destinations  = SET_Data_Store::get_destinations();
-		$start_year    = SET_TIMELINE_START_YEAR;
-		$today_frac    = self::get_today_fraction();
-		$end_year      = (int) ceil( $today_frac );
-		$year_ticks    = self::get_year_ticks( $start_year, $end_year );
-		$search_id     = wp_unique_id( 'set-search-' );
+		$probes         = SET_Data_Store::get_probes();
+		$destinations   = SET_Data_Store::get_destinations();
+		$status_labels  = self::get_status_labels();
+		$start_year     = SET_TIMELINE_START_YEAR;
+		$today_frac     = self::get_today_fraction();
+		$end_year       = (int) ceil( $today_frac );
+		$year_ticks     = self::get_year_ticks( $start_year, $end_year );
+		$search_id      = wp_unique_id( 'set-search-' );
 		$destination_id = wp_unique_id( 'set-destination-' );
+		$active_only_id = wp_unique_id( 'set-active-only-' );
 
 		ob_start();
 		?>
-		<div class="set-wrapper" style="--set-start-year: <?php echo (int) $start_year; ?>; --set-end-year: <?php echo (int) $end_year; ?>; --set-today: <?php echo esc_attr( $today_frac ); ?>;">
+		<div class="set-wrapper" data-view="grafico" style="--set-start-year: <?php echo (int) $start_year; ?>; --set-end-year: <?php echo (int) $end_year; ?>; --set-today: <?php echo esc_attr( $today_frac ); ?>;">
 
 			<?php if ( empty( $probes ) ) : ?>
 				<p class="set-notice">
 					<?php esc_html_e( 'Todavía no hay sondas registradas.', 'sondas-espaciales-timeline' ); ?>
 				</p>
 			<?php else : ?>
+
+				<div class="set-view-toggle" role="group" aria-label="<?php esc_attr_e( 'Tipo de vista', 'sondas-espaciales-timeline' ); ?>">
+					<button type="button" class="set-view-btn is-active" data-view="grafico" aria-pressed="true"><?php esc_html_e( 'Gráfico', 'sondas-espaciales-timeline' ); ?></button>
+					<button type="button" class="set-view-btn" data-view="listado" aria-pressed="false"><?php esc_html_e( 'Listado', 'sondas-espaciales-timeline' ); ?></button>
+				</div>
 
 				<div class="set-controls">
 					<div class="set-field">
@@ -170,6 +185,12 @@ class SET_Shortcode {
 								<option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $destination['label'] ); ?></option>
 							<?php endforeach; ?>
 						</select>
+					</div>
+					<div class="set-field set-field-checkbox">
+						<label for="<?php echo esc_attr( $active_only_id ); ?>">
+							<input type="checkbox" id="<?php echo esc_attr( $active_only_id ); ?>" class="set-active-only" />
+							<?php esc_html_e( 'Solo activas', 'sondas-espaciales-timeline' ); ?>
+						</label>
 					</div>
 					<div class="set-field set-zoom">
 						<span><?php esc_html_e( 'Zoom', 'sondas-espaciales-timeline' ); ?></span>
@@ -226,7 +247,7 @@ class SET_Shortcode {
 									)
 								);
 								?>
-								<div class="set-row" data-destination="<?php echo esc_attr( $probe['destination'] ); ?>" data-search="<?php echo esc_attr( $search_haystack ); ?>">
+								<div class="set-row" data-destination="<?php echo esc_attr( $probe['destination'] ); ?>" data-status="<?php echo esc_attr( $probe['status'] ); ?>" data-search="<?php echo esc_attr( $search_haystack ); ?>">
 									<div class="set-row-name">
 										<span class="set-badge" style="--set-badge-color: <?php echo esc_attr( $destination['color'] ); ?>" title="<?php echo esc_attr( $destination['label'] ); ?>"><?php echo esc_html( $destination['code'] ); ?></span>
 										<span class="set-probe-name"><?php echo esc_html( $probe['name'] ); ?></span>
@@ -245,6 +266,64 @@ class SET_Shortcode {
 						<div class="set-today-line" style="left: calc(var(--set-name-width) + (var(--set-today) - var(--set-start-year)) * var(--set-year-width));" title="<?php esc_attr_e( 'Hoy', 'sondas-espaciales-timeline' ); ?>"></div>
 
 					</div>
+				</div>
+
+				<div class="set-table-wrapper">
+					<table class="set-table">
+						<thead>
+							<tr>
+								<th></th>
+								<th data-key="name" data-type="string"><?php esc_html_e( 'Nombre', 'sondas-espaciales-timeline' ); ?></th>
+								<th data-key="agency" data-type="string"><?php esc_html_e( 'Agencia', 'sondas-espaciales-timeline' ); ?></th>
+								<th data-key="destinationLabel" data-type="string"><?php esc_html_e( 'Destino', 'sondas-espaciales-timeline' ); ?></th>
+								<th data-key="launchYear" data-type="number"><?php esc_html_e( 'Lanzamiento', 'sondas-espaciales-timeline' ); ?></th>
+								<th data-key="endYear" data-type="number"><?php esc_html_e( 'Fin', 'sondas-espaciales-timeline' ); ?></th>
+								<th data-key="statusLabel" data-type="string"><?php esc_html_e( 'Estado', 'sondas-espaciales-timeline' ); ?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $probes as $probe ) :
+								$destination = $destinations[ $probe['destination'] ] ?? array(
+									'label' => $probe['destination'],
+									'code'  => '?',
+									'color' => '#888888',
+								);
+								$search_haystack = mb_strtolower(
+									implode(
+										' ',
+										array(
+											$probe['name'],
+											$probe['agency'],
+											$destination['label'],
+											(string) $probe['launch_year'],
+										)
+									)
+								);
+								$status_label = $status_labels[ $probe['status'] ] ?? $probe['status'];
+								?>
+								<tr
+									class="set-table-row"
+									data-destination="<?php echo esc_attr( $probe['destination'] ); ?>"
+									data-status="<?php echo esc_attr( $probe['status'] ); ?>"
+									data-search="<?php echo esc_attr( $search_haystack ); ?>"
+									data-name="<?php echo esc_attr( mb_strtolower( $probe['name'] ) ); ?>"
+									data-agency="<?php echo esc_attr( mb_strtolower( $probe['agency'] ) ); ?>"
+									data-destination-label="<?php echo esc_attr( mb_strtolower( $destination['label'] ) ); ?>"
+									data-launch-year="<?php echo (int) $probe['launch_year']; ?>"
+									data-end-year="<?php echo $probe['end_year'] ? (int) $probe['end_year'] : ''; ?>"
+									data-status-label="<?php echo esc_attr( mb_strtolower( $status_label ) ); ?>"
+								>
+									<td><span class="set-badge" style="--set-badge-color: <?php echo esc_attr( $destination['color'] ); ?>" title="<?php echo esc_attr( $destination['label'] ); ?>"><?php echo esc_html( $destination['code'] ); ?></span></td>
+									<td><?php echo esc_html( $probe['name'] ); ?></td>
+									<td><?php echo esc_html( $probe['agency'] ); ?></td>
+									<td><?php echo esc_html( $destination['label'] ); ?></td>
+									<td><?php echo (int) $probe['launch_year']; ?></td>
+									<td><?php echo $probe['end_year'] ? (int) $probe['end_year'] : '—'; ?></td>
+									<td><span class="set-status-pill set-status-<?php echo esc_attr( $probe['status'] ); ?>"><?php echo esc_html( $status_label ); ?></span></td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
 				</div>
 
 			<?php endif; ?>

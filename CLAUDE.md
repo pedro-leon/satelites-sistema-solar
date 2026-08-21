@@ -16,13 +16,17 @@ pueda retomar el trabajo en curso sin perder contexto.
   (años 1959-hoy) x listado vertical de sondas espaciales, con icono de
   destino junto al nombre y una barra de color por sonda (lanzamiento →
   fin de misión), navegable con scroll (columna de nombre y cabecera de
-  años fijas), buscador, filtro por destino y zoom. Ver su propio
-  `readme.txt` para el detalle de versión/changelog.
+  años fijas), buscador, filtro por destino y zoom. También tiene una
+  vista alternativa de "Listado" (tabla ordenable por nombre, agencia,
+  destino, año de lanzamiento/fin o estado), con un botón para alternar
+  entre ambas vistas; buscador, filtro por destino y "solo activas" se
+  aplican a las dos. Ver su propio `readme.txt` para el detalle de
+  versión/changelog.
 
 ## Estado de los datos (sondas-espaciales-timeline)
 
 A fecha de la última sesión: **235 sondas** en
-`includes/data/probes.php` (v0.3.0). Desglose aproximado por destino:
+`includes/data/probes.php` (v0.4.0). Desglose aproximado por destino:
 Luna 89, Marte 51, Venus 40, heliofísica 15, asteroide 12, cometa 9,
 Júpiter 5, Sol 4, Mercurio 3, múltiple 3, Saturno 2, interestelar 2.
 
