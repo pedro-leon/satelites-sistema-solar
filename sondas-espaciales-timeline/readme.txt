@@ -4,7 +4,7 @@ Tags: sondas, espacio, astronomia, linea de tiempo, exploracion espacial
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.2.0
+Stable tag: 0.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -53,6 +53,10 @@ Editando el array que devuelve `includes/data/probes.php`. Cada sonda es un elem
 Añadiendo una entrada nueva en `includes/data/destinations.php` con su etiqueta, un símbolo (código) y un color; se usará automáticamente en el icono de las sondas y en la leyenda.
 
 == Changelog ==
+
+= 0.3.0 =
+* Ampliado el listado de sondas de 185 a 235, a partir de los artículos completos de Wikipedia "List of Solar System probes", "List of lunar probes" y "List of missions to Mars": se completan los programas Luna, Ranger, Zond y Lunokhod (retorno de muestras y róvers soviéticos), toda la era reciente de alunizadores privados/comerciales (Beresheet, Peregrine, IM-1 Odysseus, Blue Ghost, Hakuto-R, IM-2 Athena, Luna 25...), varias sondas soviéticas tempranas a Marte, y Beagle 2, Fobos-Grunt, ESCAPADE y Suisei, entre otras.
+* Corregidos el estado y las notas de Mars 3, Mars 5, Mars 6, Sakigake y MAVEN (fin de misión en 2025) con datos más precisos de las fuentes.
 
 = 0.2.0 =
 * Ampliado el listado de sondas de ~90 a 185, contrastando datos con la tabla "List of Solar System probes" de Wikipedia (en inglés) y con Wikidata: se añaden los programas Ranger y Lunar Orbiter (Luna), las primeras misiones soviéticas a Marte (Mars/Zond/Fobos), sondas heliofísicas (WIND, SOHO, ACE, STEREO, DSCOVR...) y varias misiones de asteroides (Psyche, Hera, LICIACube, Tianwen-2), entre otras.
