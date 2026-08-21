@@ -1,0 +1,344 @@
+.set-wrapper {
+	--set-border: #dcdcde;
+	--set-accent: #2271b1;
+	--set-bg-alt: #f6f7f7;
+	--set-text-muted: #646970;
+	--set-name-width: 240px;
+	--set-year-width: 40px;
+	--set-row-height: 30px;
+	font-size: 15px;
+	line-height: 1.5;
+}
+
+.set-notice {
+	padding: 1em;
+	background: var(--set-bg-alt);
+	border-left: 4px solid var(--set-accent);
+}
+
+/* Controles */
+
+.set-controls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 1.25em;
+	margin-bottom: 0.75em;
+}
+
+.set-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3em;
+}
+
+.set-field label,
+.set-field > span {
+	font-weight: 600;
+	font-size: 0.85em;
+}
+
+.set-search-input,
+.set-destination-select {
+	padding: 0.4em 0.6em;
+	min-width: 200px;
+	border: 1px solid var(--set-border);
+	border-radius: 4px;
+}
+
+.set-zoom {
+	flex-direction: row;
+	align-items: center;
+	gap: 0.4em;
+}
+
+.set-zoom > span {
+	margin-right: 0.2em;
+}
+
+.set-zoom-in,
+.set-zoom-out {
+	width: 2em;
+	height: 2em;
+	line-height: 1;
+	border: 1px solid var(--set-border);
+	border-radius: 4px;
+	background: #fff;
+	cursor: pointer;
+	font-size: 1em;
+}
+
+.set-zoom-in:hover,
+.set-zoom-out:hover {
+	background: var(--set-bg-alt);
+}
+
+/* Leyenda de destinos */
+
+.set-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4em;
+	margin-bottom: 0.75em;
+}
+
+.set-legend-item {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4em;
+	padding: 0.2em 0.7em 0.2em 0.2em;
+	border: 1px solid var(--set-border);
+	border-radius: 999px;
+	background: #fff;
+	font-size: 0.85em;
+	cursor: pointer;
+	color: inherit;
+}
+
+.set-legend-item:hover {
+	background: var(--set-bg-alt);
+}
+
+.set-legend-item.is-active {
+	border-color: var(--set-accent);
+	box-shadow: 0 0 0 1px var(--set-accent);
+}
+
+.set-count-info {
+	margin: 0 0 0.75em;
+	font-size: 0.85em;
+	color: var(--set-text-muted);
+}
+
+/* Badge de destino (icono redondo) */
+
+.set-badge {
+	display: inline-flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background: var(--set-badge-color, #888888);
+	color: #fff;
+	font-size: 12px;
+	line-height: 1;
+}
+
+/* Contenedor con scroll (horizontal + vertical) */
+
+.set-scroll {
+	overflow: auto;
+	max-height: 75vh;
+	border: 1px solid var(--set-border);
+	border-radius: 6px;
+	background: #fff;
+}
+
+.set-content {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: fit-content;
+	min-width: 100%;
+}
+
+/* Cabecera (regla de años) */
+
+.set-header {
+	position: sticky;
+	top: 0;
+	z-index: 3;
+	display: flex;
+	background: var(--set-bg-alt);
+	border-bottom: 1px solid var(--set-border);
+}
+
+.set-header-name {
+	position: sticky;
+	left: 0;
+	z-index: 4;
+	flex: 0 0 var(--set-name-width);
+	width: var(--set-name-width);
+	display: flex;
+	align-items: center;
+	padding: 0.6em 0.8em;
+	font-weight: 600;
+	background: var(--set-bg-alt);
+	border-right: 1px solid var(--set-border);
+}
+
+.set-header-years {
+	position: relative;
+	flex: 0 0 auto;
+	width: calc((var(--set-end-year) - var(--set-start-year) + 1) * var(--set-year-width));
+	height: 2.4em;
+	background-image: repeating-linear-gradient(
+		to right,
+		var(--set-border) 0,
+		var(--set-border) 1px,
+		transparent 1px,
+		transparent var(--set-year-width)
+	);
+}
+
+.set-year-label {
+	position: absolute;
+	top: 0.6em;
+	transform: translateX(-2px);
+	font-size: 0.8em;
+	color: var(--set-text-muted);
+	white-space: nowrap;
+}
+
+/* Filas */
+
+.set-rows {
+	display: flex;
+	flex-direction: column;
+}
+
+.set-row {
+	display: flex;
+	align-items: stretch;
+	height: var(--set-row-height);
+	border-bottom: 1px solid var(--set-border);
+}
+
+.set-row:nth-child(odd) .set-row-name,
+.set-row:nth-child(odd) .set-row-track {
+	background-color: var(--set-bg-alt);
+}
+
+.set-row.set-is-hidden {
+	display: none;
+}
+
+.set-row-name {
+	position: sticky;
+	left: 0;
+	z-index: 2;
+	flex: 0 0 var(--set-name-width);
+	width: var(--set-name-width);
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	padding: 0 0.8em;
+	background: #fff;
+	border-right: 1px solid var(--set-border);
+	overflow: hidden;
+}
+
+.set-probe-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.set-row-track {
+	position: relative;
+	flex: 0 0 auto;
+	width: calc((var(--set-end-year) - var(--set-start-year) + 1) * var(--set-year-width));
+	background-image: repeating-linear-gradient(
+		to right,
+		var(--set-border) 0,
+		var(--set-border) 1px,
+		transparent 1px,
+		transparent var(--set-year-width)
+	);
+	background-color: transparent;
+}
+
+/* Barra de misión */
+
+.set-bar {
+	position: absolute;
+	top: 5px;
+	bottom: 5px;
+	left: calc((var(--set-launch) - var(--set-start-year)) * var(--set-year-width));
+	width: calc((var(--set-end) - var(--set-launch)) * var(--set-year-width));
+	min-width: 6px;
+	border-radius: 5px;
+	background-color: var(--set-badge-color, var(--set-accent));
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
+.set-bar.set-status-perdida::before,
+.set-bar.set-status-fallida::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+}
+
+.set-bar.set-status-perdida::before {
+	background-image: repeating-linear-gradient(
+		135deg,
+		rgba(0, 0, 0, 0.35) 0,
+		rgba(0, 0, 0, 0.35) 2px,
+		transparent 2px,
+		transparent 6px
+	);
+}
+
+.set-bar.set-status-fallida::before {
+	background-image: repeating-linear-gradient(
+		45deg,
+		rgba(0, 0, 0, 0.45) 0,
+		rgba(0, 0, 0, 0.45) 2px,
+		transparent 2px,
+		transparent 6px
+	);
+}
+
+.set-bar.set-status-activa::after {
+	content: "";
+	position: absolute;
+	right: -3px;
+	top: 50%;
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: #2e9e4b;
+	transform: translateY(-50%);
+	box-shadow: 0 0 0 3px rgba(46, 158, 75, 0.25);
+}
+
+/* Línea de "hoy" */
+
+.set-today-line {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 2px;
+	background: #d63638;
+	opacity: 0.6;
+	pointer-events: none;
+	z-index: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+	.set-wrapper {
+		--set-border: #3c434a;
+		--set-bg-alt: #2c3338;
+		--set-text-muted: #a7aaad;
+	}
+
+	.set-scroll,
+	.set-row-name {
+		background: #1d2327;
+		color: #f0f0f1;
+	}
+
+	.set-legend-item {
+		background: #1d2327;
+		color: #f0f0f1;
+	}
+
+	.set-zoom-in,
+	.set-zoom-out {
+		background: #1d2327;
+		color: #f0f0f1;
+	}
+}
