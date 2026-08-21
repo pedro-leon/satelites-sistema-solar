@@ -1,107 +1,57 @@
 <?php
 /**
- * Plugin Name: Proximos Lanzamientos Espaciales
- * Description: Muestra proximos lanzamientos de cohetes con el shortcode [proximos_lanzamientos].
- * Version: 1.0.6
- * Author: Pedro León con Codex
- * License: GPL-2.0-or-later
+ * Plugin Name:       Proximos Lanzamientos Espaciales
+ * Plugin URI:        https://github.com/pedro-leon/mi_repo
+ * Description:       Muestra los próximos lanzamientos de cohetes con el shortcode [proximos_lanzamientos], usando datos de Launch Library 2 cacheados en el servidor.
+ * Version:            2.0.0
+ * Requires at least: 5.8
+ * Requires PHP:      7.4
+ * Author:             Pedro León con Codex
+ * License:            GPL-2.0-or-later
+ * License URI:        https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain:        proximos-lanzamientos
  */
 
-if (!defined('ABSPATH')) {
-    exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
 }
 
-define('PLE_PLUGIN_VERSION', '1.0.6');
-define('PLE_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('PLE_PLUGIN_PATH', plugin_dir_path(__FILE__));
+define( 'PLE_VERSION', '2.0.0' );
+define( 'PLE_PLUGIN_FILE', __FILE__ );
+define( 'PLE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'PLE_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define( 'PLE_TEXT_DOMAIN', 'proximos-lanzamientos' );
 
-function ple_register_assets() {
-    wp_register_style(
-        'ple-launches-style',
-        PLE_PLUGIN_URL . 'assets/css/proximos-lanzamientos.css',
-        array(),
-        PLE_PLUGIN_VERSION
-    );
+define( 'PLE_CRON_HOOK', 'ple_refresh_launches' );
+define( 'PLE_OPTION_LAUNCHES', 'ple_launches_data' );
+define( 'PLE_OPTION_LAST_UPDATED', 'ple_last_updated' );
+define( 'PLE_OPTION_LAST_ERROR', 'ple_last_error' );
+define( 'PLE_OPTION_LIMIT', 'ple_launches_limit' );
+define( 'PLE_OPTION_REFRESH_MINUTES', 'ple_refresh_minutes' );
+define( 'PLE_API_BASE', 'https://ll.thespacedevs.com/2.3.0/launches/upcoming/' );
+define( 'PLE_REST_NAMESPACE', 'ple/v1' );
 
-    wp_register_script(
-        'ple-launches-script',
-        PLE_PLUGIN_URL . 'assets/js/proximos-lanzamientos.js',
-        array(),
-        PLE_PLUGIN_VERSION,
-        true
-    );
+require_once PLE_PLUGIN_DIR . 'includes/class-ple-api-client.php';
+require_once PLE_PLUGIN_DIR . 'includes/class-ple-data-store.php';
+require_once PLE_PLUGIN_DIR . 'includes/class-ple-cron.php';
+require_once PLE_PLUGIN_DIR . 'includes/class-ple-rest.php';
+require_once PLE_PLUGIN_DIR . 'includes/class-ple-shortcode.php';
+require_once PLE_PLUGIN_DIR . 'includes/class-ple-admin.php';
+require_once PLE_PLUGIN_DIR . 'includes/class-ple-activator.php';
+require_once PLE_PLUGIN_DIR . 'includes/class-ple-deactivator.php';
 
-    wp_localize_script(
-        'ple-launches-script',
-        'pleLaunchesConfig',
-        array(
-            'apiUrl' => 'https://ll.thespacedevs.com/2.3.0/launches/upcoming/?limit=12&ordering=net&format=json',
-            'refreshInterval' => 10 * 60 * 1000,
-            'statusLoading' => 'Cargando próximos lanzamientos...',
-            'statusUpdated' => 'Actualizado:',
-            'localTimeNotice' => 'Todas las horas se muestran en tu hora local.',
-            'statusError' => 'No se pudieron cargar los lanzamientos. Revisa la conexión o inténtalo más tarde.',
-            'emptyMessage' => 'No hay lanzamientos próximos disponibles ahora mismo.',
-            'fallbackText' => 'Pendiente de confirmar',
-            'launchCountLabel' => 'lanzamientos cargados',
-            'countdownLabel' => 'hasta el próximo lanzamiento',
-            'sourceLabel' => 'Datos de',
-            'sourceName' => 'Launch Library 2',
-            'sourceUrl' => 'https://thespacedevs.com/llapi',
-            'dateLabel' => 'Fecha y hora',
-            'agencyLabel' => 'Agencia',
-            'rocketLabel' => 'Cohete',
-            'padLabel' => 'Plataforma',
-            'pendingDate' => 'Fecha pendiente',
-            'pendingLocation' => 'Ubicación pendiente',
-            'missionFallback' => 'La misión todavía no tiene descripción pública.',
-            'videoLabel' => 'Video',
-            'webLabel' => 'Web',
-            'officialWebLabel' => 'Web oficial',
-        )
-    );
+register_activation_hook( __FILE__, array( 'PLE_Activator', 'activate' ) );
+register_deactivation_hook( __FILE__, array( 'PLE_Deactivator', 'deactivate' ) );
+
+/**
+ * Arranca los distintos componentes del plugin.
+ */
+function ple_run_plugin() {
+	load_plugin_textdomain( PLE_TEXT_DOMAIN, false, dirname( plugin_basename( PLE_PLUGIN_FILE ) ) . '/languages' );
+
+	PLE_Cron::init();
+	PLE_Rest::init();
+	PLE_Shortcode::init();
+	PLE_Admin::init();
 }
-add_action('wp_enqueue_scripts', 'ple_register_assets');
-
-function ple_render_shortcode() {
-    wp_enqueue_style('ple-launches-style');
-    wp_enqueue_script('ple-launches-script');
-
-    ob_start();
-    ?>
-    <div class="ple-launches-widget" data-ple-launches>
-        <section class="ple-topbar" aria-labelledby="ple-page-title">
-            <div>
-                <p class="ple-eyebrow">Agenda espacial en directo</p>
-                <h2 id="ple-page-title" class="ple-title">Próximos lanzamientos de cohetes</h2>
-            </div>
-            <div class="ple-summary" aria-label="Resumen">
-                <div class="ple-stat">
-                    <strong data-ple-launch-count>--</strong>
-                    <span>lanzamientos cargados</span>
-                </div>
-                <div class="ple-stat">
-                    <strong data-ple-next-countdown>--</strong>
-                    <span>hasta el próximo lanzamiento</span>
-                </div>
-            </div>
-        </section>
-
-        <section class="ple-controls" aria-label="Controles">
-            <p class="ple-time-notice">Todas las horas se muestran en tu hora local.</p>
-            <p class="ple-status" data-ple-status role="status">Cargando próximos lanzamientos...</p>
-        </section>
-
-        <section class="ple-launch-grid" data-ple-launches-list aria-live="polite"></section>
-
-        <footer class="ple-page-footer">
-            <p class="ple-source">
-                Datos de <a href="https://thespacedevs.com/llapi" target="_blank" rel="noreferrer">Launch Library 2</a>.
-            </p>
-        </footer>
-    </div>
-    <?php
-
-    return ob_get_clean();
-}
-add_shortcode('proximos_lanzamientos', 'ple_render_shortcode');
+add_action( 'plugins_loaded', 'ple_run_plugin' );

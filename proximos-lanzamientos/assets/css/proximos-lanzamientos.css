@@ -172,10 +172,14 @@
   color: var(--ple-danger);
 }
 
-.ple-badge.hold,
-.ple-badge.failure {
+.ple-badge.hold {
   background: rgba(247, 201, 72, 0.14);
   color: var(--ple-accent-2);
+}
+
+.ple-badge.failure {
+  background: rgba(255, 122, 138, 0.14);
+  color: var(--ple-danger);
 }
 
 .ple-meta {

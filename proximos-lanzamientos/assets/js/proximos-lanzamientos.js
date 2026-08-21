@@ -24,44 +24,11 @@
 
   function isSafeUrl(url) {
     try {
-      const parsedUrl = new URL(url);
+      const parsedUrl = new URL(url, window.location.href);
       return parsedUrl.protocol === "https:" || parsedUrl.protocol === "http:";
     } catch (error) {
       return false;
     }
-  }
-
-  function getLaunchLinks(launch) {
-    const videoLinks = launch.vidURLs || launch.vid_urls || [];
-    const webLinks = launch.infoURLs || launch.info_urls || [];
-    const seen = new Set();
-
-    return [
-      ...videoLinks.map((link) => ({ ...link, label: config.videoLabel || "Video", className: "video" })),
-      ...webLinks.map((link) => ({
-        ...link,
-        label: link.type?.name?.toLowerCase().includes("official")
-          ? (config.officialWebLabel || "Web oficial")
-          : (config.webLabel || "Web"),
-        className: "web"
-      }))
-    ].filter((link) => {
-      if (!link.url || !isSafeUrl(link.url) || seen.has(link.url)) return false;
-      seen.add(link.url);
-      return true;
-    });
-  }
-
-  function renderLaunchLinks(links) {
-    if (!links.length) return "";
-
-    const markup = links.slice(0, 4).map((link) => `
-      <a class="ple-launch-link ${escapeHtml(link.className)}" href="${encodeURI(link.url)}" target="_blank" rel="noreferrer">
-        ${escapeHtml(link.label)}
-      </a>
-    `).join("");
-
-    return `<div class="ple-launch-links" aria-label="Enlaces del lanzamiento">${markup}</div>`;
   }
 
   function getCountdownLabel(dateValue) {
@@ -89,11 +56,6 @@
     }) || null;
   }
 
-  function getLaunchImage(launch) {
-    const url = launch.image?.image_url || launch.image || launch.rocket?.configuration?.image_url || "";
-    return isSafeUrl(url) ? url : "";
-  }
-
   function createDateFormatters() {
     const language = document.documentElement.lang || "es-ES";
 
@@ -110,108 +72,150 @@
     };
   }
 
-  function createRenderer(root) {
-    const launchesEl = root.querySelector("[data-ple-launches-list]");
-    const statusEl = root.querySelector("[data-ple-status]");
-    const timeNoticeEl = root.querySelector(".ple-time-notice");
-    const launchCountEl = root.querySelector("[data-ple-launch-count]");
-    const nextCountdownEl = root.querySelector("[data-ple-next-countdown]");
-    const formatters = createDateFormatters();
+  function renderLinks(links) {
+    const safeLinks = (links || []).filter((link) => isSafeUrl(link.url)).slice(0, 4);
+    if (!safeLinks.length) return "";
 
-    if (timeNoticeEl) {
-      timeNoticeEl.textContent = config.localTimeNotice || "Todas las horas se muestran en tu hora local.";
-    }
+    const labels = {
+      video: config.videoLabel || "Video",
+      official: config.officialWebLabel || "Web oficial",
+      web: config.webLabel || "Web"
+    };
 
-    function renderLaunches(launches) {
-      const nextFutureLaunch = getNextFutureLaunch(launches);
+    const markup = safeLinks.map((link) => {
+      const className = "video" === link.type ? "video" : "web";
+      const label = labels[link.type] || labels.web;
+      return `<a class="ple-launch-link ${className}" href="${encodeURI(link.url)}" target="_blank" rel="noreferrer noopener">${escapeHtml(label)}</a>`;
+    }).join("");
 
-      launchesEl.innerHTML = "";
-      launchCountEl.textContent = launches.length;
-      nextCountdownEl.textContent = nextFutureLaunch ? getCountdownLabel(nextFutureLaunch.window_start) : "--";
+    return `<div class="ple-launch-links" aria-label="Enlaces del lanzamiento">${markup}</div>`;
+  }
 
-      if (!launches.length) {
-        launchesEl.innerHTML = `<div class="ple-empty">${escapeHtml(config.emptyMessage || "No hay lanzamientos próximos disponibles ahora mismo.")}</div>`;
-        return;
-      }
+  function renderCard(launch, formatters) {
+    const imageUrl = isSafeUrl(launch.image) ? launch.image : "";
+    const launchDate = launch.window_start ? new Date(launch.window_start) : null;
+    const isValidDate = launchDate && Number.isFinite(launchDate.getTime());
+    const iso = isValidDate ? launchDate.toISOString() : "";
+    const dateMarkup = isValidDate
+      ? `<time class="ple-date-line" datetime="${iso}">${escapeHtml(formatters.local.format(launchDate))}</time><time class="ple-date-line" datetime="${iso}">${escapeHtml(formatters.utc.format(launchDate))} UTC</time>`
+      : escapeHtml(config.pendingDate || "Fecha pendiente");
+    const statusClass = getStatusClass(launch.status_abbrev || launch.status_name);
 
-      const fragment = document.createDocumentFragment();
-
-      launches.forEach((launch) => {
-        const card = document.createElement("article");
-        const imageUrl = getLaunchImage(launch);
-        const launchDate = launch.window_start ? new Date(launch.window_start) : null;
-        const launchDateMarkup = launchDate
-          ? `<span class="ple-date-line">${escapeHtml(formatters.local.format(launchDate))}</span><span class="ple-date-line">${escapeHtml(formatters.utc.format(launchDate))} UTC</span>`
-          : escapeHtml(config.pendingDate || "Fecha pendiente");
-        const missionDescription = launch.mission?.description || launch.launch_service_provider?.description;
-        const statusClass = getStatusClass(launch.status?.abbrev || launch.status?.name);
-        const launchLinks = getLaunchLinks(launch);
-
-        card.className = "ple-launch-card";
-        card.innerHTML = `
-          ${imageUrl ? `<img class="ple-launch-image" src="${encodeURI(imageUrl)}" alt="">` : ""}
-          <div class="ple-mission">
-            <h3 class="ple-mission-title">${safeText(launch.name)}</h3>
-            <span class="ple-badge ${statusClass}">${safeText(launch.status?.abbrev, "TBD")}</span>
+    return `
+      <article class="ple-launch-card">
+        ${imageUrl ? `<img class="ple-launch-image" src="${encodeURI(imageUrl)}" alt="" loading="lazy" decoding="async">` : ""}
+        <div class="ple-mission">
+          <h3 class="ple-mission-title">${safeText(launch.name)}</h3>
+          <span class="ple-badge ${statusClass}">${safeText(launch.status_abbrev, "TBD")}</span>
+        </div>
+        <dl class="ple-meta">
+          <div class="ple-meta-row">
+            <dt>${escapeHtml(config.dateLabel || "Fecha y hora")}</dt>
+            <dd class="ple-date-list">${dateMarkup}</dd>
           </div>
-          <dl class="ple-meta">
-            <div class="ple-meta-row">
-              <dt>${escapeHtml(config.dateLabel || "Fecha y hora")}</dt>
-              <dd class="ple-date-list">${launchDateMarkup}</dd>
-            </div>
-            <div class="ple-meta-row">
-              <dt>${escapeHtml(config.agencyLabel || "Agencia")}</dt>
-              <dd>${safeText(launch.launch_service_provider?.name)}</dd>
-            </div>
-            <div class="ple-meta-row">
-              <dt>${escapeHtml(config.rocketLabel || "Cohete")}</dt>
-              <dd>${safeText(launch.rocket?.configuration?.full_name || launch.rocket?.configuration?.name)}</dd>
-            </div>
-            <div class="ple-meta-row">
-              <dt>${escapeHtml(config.padLabel || "Plataforma")}</dt>
-              <dd>${safeText(launch.pad?.name)} · ${safeText(launch.pad?.location?.name, config.pendingLocation || "Ubicación pendiente")}</dd>
-            </div>
-          </dl>
-          <p class="ple-description">${safeText(missionDescription, config.missionFallback || "La misión todavía no tiene descripción pública.")}</p>
-          ${renderLaunchLinks(launchLinks)}
-        `;
+          <div class="ple-meta-row">
+            <dt>${escapeHtml(config.agencyLabel || "Agencia")}</dt>
+            <dd>${safeText(launch.agency)}</dd>
+          </div>
+          <div class="ple-meta-row">
+            <dt>${escapeHtml(config.rocketLabel || "Cohete")}</dt>
+            <dd>${safeText(launch.rocket)}</dd>
+          </div>
+          <div class="ple-meta-row">
+            <dt>${escapeHtml(config.padLabel || "Plataforma")}</dt>
+            <dd>${safeText(launch.pad)} · ${safeText(launch.location, config.pendingLocation || "Ubicación pendiente")}</dd>
+          </div>
+        </dl>
+        <p class="ple-description">${safeText(launch.description, config.missionFallback || "La misión todavía no tiene descripción pública.")}</p>
+        ${renderLinks(launch.links)}
+      </article>
+    `;
+  }
 
-        fragment.appendChild(card);
+  function getParts(root) {
+    return {
+      root,
+      launchesEl: root.querySelector("[data-ple-launches-list]"),
+      statusEl: root.querySelector("[data-ple-status]"),
+      timeNoticeEl: root.querySelector(".ple-time-notice"),
+      launchCountEl: root.querySelector("[data-ple-launch-count]"),
+      nextCountdownEl: root.querySelector("[data-ple-next-countdown]")
+    };
+  }
+
+  function main() {
+    const roots = Array.from(document.querySelectorAll("[data-ple-launches]"));
+    if (!roots.length) return;
+
+    // Todas las instancias del shortcode en la página comparten un único
+    // fetch/temporizador: evita duplicar peticiones si el shortcode se usa
+    // más de una vez en la misma página.
+    const parts = roots.map(getParts);
+    const formatters = createDateFormatters();
+    let abortController = null;
+
+    parts.forEach((part) => {
+      if (part.timeNoticeEl) {
+        part.timeNoticeEl.textContent = config.localTimeNotice || "Todas las horas se muestran en tu hora local.";
+      }
+    });
+
+    function renderAll(launches) {
+      const nextFutureLaunch = getNextFutureLaunch(launches);
+      const countdownLabel = nextFutureLaunch ? getCountdownLabel(nextFutureLaunch.window_start) : "--";
+      const emptyMarkup = `<div class="ple-empty">${escapeHtml(config.emptyMessage || "No hay lanzamientos próximos disponibles ahora mismo.")}</div>`;
+      const cardsMarkup = launches.length ? launches.map((launch) => renderCard(launch, formatters)).join("") : emptyMarkup;
+
+      parts.forEach((part) => {
+        part.launchesEl.innerHTML = cardsMarkup;
+        part.launchCountEl.textContent = launches.length;
+        part.nextCountdownEl.textContent = countdownLabel;
       });
-
-      launchesEl.appendChild(fragment);
     }
 
     async function loadLaunches() {
-      statusEl.textContent = config.statusLoading || "Cargando próximos lanzamientos...";
-      statusEl.classList.remove("is-error");
+      parts.forEach((part) => {
+        part.statusEl.textContent = config.statusLoading || "Cargando próximos lanzamientos...";
+        part.statusEl.classList.remove("is-error");
+      });
+
+      if (abortController) abortController.abort();
+      abortController = new AbortController();
 
       try {
-        const response = await fetch(config.apiUrl);
+        const response = await fetch(config.apiUrl, { signal: abortController.signal });
 
         if (!response.ok) {
           throw new Error(`Launch API status ${response.status}`);
         }
 
         const data = await response.json();
-        renderLaunches(data.results || []);
-        statusEl.textContent = `${config.statusUpdated || "Actualizado:"} ${new Date().toLocaleTimeString(document.documentElement.lang || "es-ES", {
+        renderAll(data.launches || []);
+
+        const timeLabel = new Date().toLocaleTimeString(document.documentElement.lang || "es-ES", {
           hour: "2-digit",
           minute: "2-digit"
-        })}`;
+        });
+        parts.forEach((part) => {
+          part.statusEl.textContent = `${config.statusUpdated || "Actualizado:"} ${timeLabel}`;
+        });
       } catch (error) {
-        launchesEl.innerHTML = "";
-        launchCountEl.textContent = "--";
-        nextCountdownEl.textContent = "--";
-        statusEl.textContent = config.statusError || "No se pudieron cargar los lanzamientos. Revisa la conexión o inténtalo más tarde.";
-        statusEl.classList.add("is-error");
+        if ("AbortError" === error.name) return;
+
+        parts.forEach((part) => {
+          part.launchesEl.innerHTML = "";
+          part.launchCountEl.textContent = "--";
+          part.nextCountdownEl.textContent = "--";
+          part.statusEl.textContent = config.statusError || "No se pudieron cargar los lanzamientos. Revisa la conexión o inténtalo más tarde.";
+          part.statusEl.classList.add("is-error");
+        });
         console.error(error);
       }
     }
 
     loadLaunches();
-    window.setInterval(loadLaunches, Number(config.refreshInterval) || 600000);
+    window.setInterval(loadLaunches, Number(config.refreshInterval) || 900000);
   }
 
-  document.querySelectorAll("[data-ple-launches]").forEach(createRenderer);
+  main();
 })();
