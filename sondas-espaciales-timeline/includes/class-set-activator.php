@@ -18,6 +18,7 @@ class SET_Activator {
 	public static function activate() {
 		self::create_tables();
 		SET_Data_Store::maybe_seed_defaults();
+		SET_Data_Store::backfill_missing_data_from_seed();
 
 		update_option( SET_OPTION_DB_VERSION, SET_DB_VERSION );
 	}

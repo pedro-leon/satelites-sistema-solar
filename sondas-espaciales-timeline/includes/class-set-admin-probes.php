@@ -182,8 +182,8 @@ class SET_Admin_Probes {
 							<td><a href="<?php echo esc_url( $edit_url ); ?>"><strong><?php echo esc_html( $probe['name'] ); ?></strong></a></td>
 							<td><?php echo esc_html( $probe['agency'] ); ?></td>
 							<td><?php echo esc_html( $destination_data['label'] ); ?></td>
-							<td><?php echo esc_html( SET_Data_Store::format_date( $probe['launch_date'], $probe['launch_year'] ) ); ?></td>
-							<td><?php echo esc_html( SET_Data_Store::format_date( $probe['end_date'], $probe['end_year'] ) ); ?></td>
+							<td><?php echo esc_html( SET_Data_Store::format_date( $probe['launch_date'] ) ); ?></td>
+							<td><?php echo esc_html( SET_Data_Store::format_date( $probe['end_date'] ) ); ?></td>
 							<td><?php echo esc_html( $status_labels[ $probe['status'] ] ?? $probe['status'] ); ?></td>
 							<td>
 								<a href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Editar', 'sondas-espaciales-timeline' ); ?></a>

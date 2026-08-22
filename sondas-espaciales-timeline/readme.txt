@@ -4,7 +4,7 @@ Tags: sondas, espacio, astronomia, linea de tiempo, exploracion espacial
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.7.0
+Stable tag: 0.8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -65,6 +65,12 @@ Desde "Sondas Espaciales" → "Destinos", con su etiqueta, un símbolo corto y u
 Al desactivarlo no se pierde nada. Al desinstalarlo desde el panel de administración sí se borran las tablas propias (`wp_set_probes` y `wp_set_destinations`); si quieres conservar una copia antes, usa el botón "Exportar a PHP" de cada pantalla.
 
 == Changelog ==
+
+= 0.8.0 =
+* Las tablas de listado (frontend y panel de administración) ya no muestran el año como respaldo cuando falta la fecha completa: si no hay día/mes/año, la celda queda en blanco (un guion), en vez de mostrar solo el año.
+* Rellenadas ~100 fechas completas más (lanzamiento y/o fin) a partir de una segunda pasada por los tres PDF de Wikipedia, con especial atención al PDF de "List of lunar probes" (tiene una clave explícita sobre qué representa cada fecha) y a las notas de "List of missions to Mars", que en varios casos dan lanzamiento/inserción orbital/fin explícitos con las palabras "(launch)" o similares.
+* Nueva migración automática (`SET_Data_Store::backfill_missing_data_from_seed()`, en cada activación/actualización del plugin): si una instalación ya existente tiene una sonda sin fecha completa o sin destinos adicionales que la semilla de fábrica sí incorpora en una versión más reciente, se rellenan esos huecos sin tocar ningún otro dato que el usuario ya tenga editado. Antes, una instalación existente solo recibía los datos nuevos si se restauraban los valores de fábrica.
+* Vega 1 y Vega 2 pasan a llevar Venus y el cometa Halley como destinos adicionales con su fecha (antes solo tenían el destino genérico "Varios destinos", sin desglose).
 
 = 0.7.0 =
 * Soporte de multi-destino: una sonda puede tener, además de su destino principal, una lista de "destinos adicionales" con su propia fecha (p. ej. las Voyager y Pioneer 11 sobrevolando Júpiter antes de Saturno, o Voyager 2 sobrevolando también Urano y Neptuno; New Horizons sobrevolando Júpiter de camino a Plutón). Se gestionan desde el formulario de la sonda en el panel de administración, con filas repetibles para añadir o quitar destinos.

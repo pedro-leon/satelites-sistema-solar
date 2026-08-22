@@ -34,8 +34,12 @@ pueda retomar el trabajo en curso sin perder contexto.
   Horizons sobrevolando Júpiter de camino a Plutón). Se ven como
   distintivos junto al nombre y como marcadores sobre la barra en el
   gráfico (con su propio `title`, sin tocar el tooltip de la barra), y
-  como una columna "Ruta" en el listado. Ver su propio `readme.txt`
-  para el detalle de versión/changelog.
+  como una columna "Ruta" en el listado. Desde la v0.8.0, las tablas
+  (listado y admin) **ya no muestran el año como respaldo** cuando falta
+  la fecha completa — si no hay día/mes/año la celda queda en blanco (un
+  guion), a petición expresa del usuario ("no quiero las fechas que sean
+  solo año"). Ver su propio `readme.txt` para el detalle de
+  versión/changelog.
 
 ### Destinos adicionales / multi-destino (`SET_Data_Store::*_waypoints*`, desde v0.7.0)
 
@@ -116,19 +120,26 @@ shortcode ni el admin tocan `$wpdb` directamente.
   toca nada.
 
 A fecha de la última sesión: **235 sondas** en la semilla de fábrica
-(`includes/data/probes.php`, v0.7.0; el número de sondas no cambió en la
-v0.6.0 ni en la v0.7.0). Desglose aproximado por destino (destino
-principal, no cuenta los waypoints): Luna 89, Marte 51, Venus 40,
-heliofísica 15, asteroide 12, cometa 9, Júpiter 5, Sol 4, Mercurio 3,
-Saturno 2, interestelar 2, múltiple 2, Plutón 1.
+(`includes/data/probes.php`, v0.8.0; el número de sondas no cambió en la
+v0.6.0, v0.7.0 ni v0.8.0, solo se completaron fechas/destinos). Desglose
+aproximado por destino (destino principal, no cuenta los waypoints):
+Luna 89, Marte 51, Venus 40, heliofísica 15, asteroide 12, cometa 9,
+Júpiter 5, Sol 4, Mercurio 3, Saturno 2, interestelar 2, múltiple 2,
+Plutón 1.
 
 ### Fechas completas (`launch_date`/`end_date`, desde v0.6.0)
 
 Columnas `DATE NULL` en `wp_set_probes`, opcionales (muchas sondas solo
-tienen año). `SET_Data_Store::format_date( $date, $fallback_year )`
-centraliza el formateo (`d/m/Y` si hay fecha completa, si no el año, si
-no un guion) y se usa tanto en el admin como en la tabla de listado del
-shortcode. **El tooltip del gráfico no usa `format_date` y no se debe
+tienen año). `SET_Data_Store::format_date( $date, $fallback_year = null )`
+centraliza el formateo (`d/m/Y` si hay fecha completa, si no cae al
+`$fallback_year` que se le pase, si no un guion). **Desde la v0.8.0 las
+tablas (listado del shortcode y listado del admin) llaman a
+`format_date()` sin pasar `$fallback_year`**, para que se vea un guion
+en vez del año cuando no hay fecha completa (petición expresa del
+usuario: "no quiero las fechas que sean solo año"). El tooltip de los
+waypoints en el gráfico sí sigue pasando el año como respaldo (tiene
+sentido ahí, es solo un tooltip informativo). **El tooltip de la barra
+principal del gráfico no usa `format_date` en absoluto y no se debe
 tocar** — el usuario confirmó explícitamente que esa parte ya le vale
 como está.
 
@@ -144,25 +155,47 @@ Al extraer fechas de los PDF hay que distinguir con cuidado:
   `launch_date`.
 - "List of missions to Mars" es la excepción: tiene una columna "Launch
   date" dedicada y fiable, no hace falta aplicar esta distinción ahí.
+- "List of lunar probes" tiene su propia "Key" explícita al principio
+  del documento que dice literalmente qué representa la fecha según el
+  tipo de sonda (sobrevuelo = encuentro más cercano; impactador =
+  impacto; orbitador = inserción orbital hasta fin de misión;
+  aterrizador = aterrizaje hasta fin de misión; fallo = lanzamiento) —
+  muy útil, no hace falta inferirlo.
+- Ojo con los rangos "fecha inicio – fecha fin": el inicio casi nunca es
+  el lanzamiento (suele ser inserción orbital o aterrizaje, que ocurre
+  semanas/meses después); el fin, si coincide con el `end_year` ya
+  registrado, normalmente sí es un buen `end_date`.
+- Varias entradas recientes (2018 en adelante) ya etiquetan
+  explícitamente "(launch)" junto a la fecha en la propia tabla —
+  usables directamente sin ambigüedad.
 
-Fuentes de Wikipedia (en inglés) ya procesadas por completo — **no hace
-falta volver a pedirlas**, ya están incorporadas a la semilla de fábrica:
+Fuentes de Wikipedia (en inglés), ya con **dos pasadas completas** (la
+primera para el listado inicial de sondas y las fechas de Marte, la
+segunda —sesión de la v0.8.0— específicamente para completar fechas
+día/mes/año que faltaban en el resto de categorías):
 - "List of Solar System probes" (versión completa, ~44 páginas en PDF):
   Sol, Mercurio, Venus, Marte, Júpiter, Saturno, Titán, Urano, Neptuno,
-  Plutón, cometas, cinturón de Kuiper — todo cubierto.
-- "List of lunar probes" (~30 páginas): programas Luna, Ranger, Zond,
-  Surveyor, Lunar Orbiter, Lunokhod, y toda la era comercial/privada
-  reciente (Beresheet, Peregrine, IM-1/IM-2, Blue Ghost, Hakuto-R...).
-- "List of missions to Mars" (~27 páginas): usada sobre todo para
-  contrastar fechas exactas de lanzamiento (tiene una columna "Launch
-  date" dedicada, más fiable que las fechas de evento de las otras
-  listas) y para completar sondas soviéticas tempranas.
+  Plutón, cometas, asteroides, cinturón de Kuiper — todo revisado.
+- "List of lunar probes" (~30 páginas): revisado de cabo a rabo esta
+  sesión para fechas completas; fue la fuente más productiva (72 fechas
+  nuevas de una sola pasada).
+- "List of missions to Mars" (~27 páginas): revisado de nuevo; casi
+  todo lo que da (con día exacto) ya estaba incorporado desde la Fase 7,
+  solo aportó 1 fecha nueva (Mars 3) en la segunda pasada.
 
-Fuentes que **todavía no se han pedido/procesado** y podrían aportar más
-sondas si el usuario las adjunta como PDF: listas dedicadas de Venus,
-Júpiter, Saturno, planetas exteriores, asteroides o cometas (aunque la
-lista completa de "Solar System probes" ya cubre razonablemente esas
-categorías, así que el margen de mejora ahí es menor que en Marte/Luna).
+**Aun así, tras dos pasadas quedan sin fecha completa 135 sondas sin
+`launch_date` y 108 sin `end_date` (de 235).** No es que falte revisar
+más páginas de estos tres PDF — es que Wikipedia, para una parte
+importante de las sondas (sobre todo fallos soviéticos de la Guerra
+Fría, misiones heliofísicas de larga duración con rangos "mes-año" sin
+día, y bastantes orbitadores/aterrizadores donde solo se da la fecha de
+llegada pero no la de lanzamiento), sencillamente no registra el día
+exacto en estas listas-resumen. Para completar más habría que ir
+artículo por artículo de cada sonda (no factible a este volumen) o que
+el usuario aporte el dato él mismo desde el panel de administración.
+Fuentes dedicadas por planeta/categoría (Venus, Júpiter, Saturno,
+asteroides, cometas) podrían aportar algo más de detalle si el usuario
+las adjunta como PDF, pero el margen de mejora ya es menor.
 
 ## Si el usuario pide ampliar/corregir sondas a partir de una fuente nueva
 
@@ -171,12 +204,36 @@ la forma más directa es hacerlo **a través del panel de administración**
 si hay un WordPress real disponible; si se está trabajando solo en este
 repo (sin WordPress), lo más práctico sigue siendo editar
 `includes/data/probes.php`/`destinations.php` (mismo formato de
-siempre — ver convenciones más abajo) y avisar al usuario de que, para
-que los cambios lleguen a su sitio ya instalado, tocará o bien volver a
-activar el plugin sobre una base de datos limpia, o bien usar el botón
-"Restaurar valores de fábrica" del panel (que sobreescribe cualquier
-edición manual que el usuario haya hecho desde el propio panel, así que
-hay que avisarle antes de sugerirlo).
+siempre — ver convenciones más abajo).
+
+### Cómo llegan los cambios de la semilla a una instalación ya existente
+
+**Desde la v0.8.0 hay una migración automática** —
+`SET_Data_Store::backfill_missing_data_from_seed()`, llamada en
+`SET_Activator::activate()` justo después de `maybe_seed_defaults()`, y
+por tanto también en cada carga vía el chequeo de `plugins_loaded` /
+`SET_DB_VERSION`—: para cada sonda que **ya exista** en la base de datos
+del usuario, si le falta `launch_date`, `end_date` o destinos
+adicionales que la semilla de fábrica sí trae en la versión nueva del
+plugin, se rellenan esos huecos concretos. **Nunca toca un campo que el
+usuario ya tenga puesto** (nombre, agencia, destino principal, nota,
+años...) — solo completa lo que está vacío. Esto significa que, a
+partir de ahora, con solo instalar la versión nueva del plugin (subir
+los ficheros y dejar que se active/actualice) el usuario recibe
+automáticamente las fechas y destinos adicionales nuevos que se vayan
+añadiendo a la semilla en el futuro, sin tener que usar "Restaurar
+valores de fábrica" (que sigue existiendo, pero ahora es más un "borrón
+y cuenta nueva" que un mecanismo necesario para recibir actualizaciones
+de datos).
+
+Importante: esta migración **no crea sondas nuevas** que se añadan a la
+semilla más adelante (solo rellena huecos en las que ya existen por
+`id`), ni corrige campos ya rellenados aunque cambien en la semilla
+(p. ej. si en el futuro se corrige el `destination` principal de una
+sonda ya existente, esa corrección no llega sola — habría que editarla
+a mano en el panel, o usar "Restaurar valores de fábrica" sabiendo que
+eso sí sobreescribe cualquier edición manual, así que hay que avisar al
+usuario antes de sugerirlo).
 
 ### Convenciones de `includes/data/probes.php` (semilla de fábrica)
 

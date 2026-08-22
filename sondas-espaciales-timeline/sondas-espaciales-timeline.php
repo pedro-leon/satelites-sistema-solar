@@ -3,7 +3,7 @@
  * Plugin Name:        Sondas Espaciales - Línea de Tiempo
  * Plugin URI:         https://github.com/pedro-leon/mi_repo
  * Description:        Línea de tiempo navegable (desde 1959 hasta hoy) con todas las sondas espaciales lanzadas, su duración de misión y su destino.
- * Version:            0.7.0
+ * Version:            0.8.0
  * Requires at least:  5.8
  * Requires PHP:       7.4
  * Author:             Pedro León
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Salir si se accede directamente.
 }
 
-define( 'SET_VERSION', '0.7.0' );
+define( 'SET_VERSION', '0.8.0' );
 define( 'SET_PLUGIN_FILE', __FILE__ );
 define( 'SET_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SET_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -27,7 +27,7 @@ define( 'SET_TIMELINE_START_YEAR', 1959 );
 
 // Versión del esquema de base de datos (tablas propias); subirla obliga a
 // SET_Activator::maybe_upgrade() a volver a ejecutar create_tables().
-define( 'SET_DB_VERSION', '1.2' );
+define( 'SET_DB_VERSION', '1.3' );
 define( 'SET_OPTION_DB_VERSION', 'set_db_version' );
 
 require_once SET_PLUGIN_DIR . 'includes/class-set-data-store.php';

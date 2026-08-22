@@ -570,6 +570,59 @@ class SET_Data_Store {
 	}
 
 	/**
+	 * Rellena, para las sondas que ya existían en la base de datos (de una
+	 * instalación previa), los campos de fecha completa y los destinos
+	 * adicionales que la semilla de fábrica haya incorporado más tarde y
+	 * que todavía estén vacíos en la base de datos del usuario.
+	 *
+	 * `maybe_seed_defaults()` solo siembra si las tablas están
+	 * completamente vacías, así que una instalación ya existente nunca
+	 * recibiría los datos nuevos de una versión posterior del plugin. Esta
+	 * función se llama en cada activación/actualización (junto a
+	 * `maybe_seed_defaults()`) para cerrar ese hueco, sin tocar nunca un
+	 * valor que el usuario ya tenga puesto (nombre, agencia, destino,
+	 * nota, años...) — solo completa fecha completa y destinos
+	 * adicionales cuando están vacíos.
+	 */
+	public static function backfill_missing_data_from_seed() {
+		global $wpdb;
+
+		$table = self::probes_table();
+
+		foreach ( self::get_default_probes() as $seed_probe ) {
+			$live = $wpdb->get_row(
+				$wpdb->prepare( "SELECT id, launch_date, end_date FROM $table WHERE id = %s", $seed_probe['id'] ),
+				ARRAY_A
+			);
+
+			if ( ! $live ) {
+				continue;
+			}
+
+			$updates = array();
+			$formats = array();
+
+			if ( empty( $live['launch_date'] ) && ! empty( $seed_probe['launch_date'] ) ) {
+				$updates['launch_date'] = $seed_probe['launch_date'];
+				$formats[]              = '%s';
+			}
+
+			if ( empty( $live['end_date'] ) && ! empty( $seed_probe['end_date'] ) ) {
+				$updates['end_date'] = $seed_probe['end_date'];
+				$formats[]           = '%s';
+			}
+
+			if ( $updates ) {
+				$wpdb->update( $table, $updates, array( 'id' => $seed_probe['id'] ), $formats, array( '%s' ) );
+			}
+
+			if ( ! empty( $seed_probe['waypoints'] ) && empty( self::get_probe_waypoints( $seed_probe['id'] ) ) ) {
+				self::save_probe_waypoints( $seed_probe['id'], $seed_probe['waypoints'] );
+			}
+		}
+	}
+
+	/**
 	 * Vacía las dos tablas y las vuelve a sembrar con los datos de
 	 * fábrica. Usado por el botón "Restaurar valores de fábrica".
 	 */
