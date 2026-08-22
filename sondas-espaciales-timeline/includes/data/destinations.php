@@ -74,6 +74,11 @@ return array(
 		'code'  => '☄',
 		'color' => '#66c2ff',
 	),
+	'pluton'       => array(
+		'label' => __( 'Plutón', 'sondas-espaciales-timeline' ),
+		'code'  => '♇',
+		'color' => '#a67c52',
+	),
 	'multiple'     => array(
 		'label' => __( 'Varios destinos', 'sondas-espaciales-timeline' ),
 		'code'  => '✳',

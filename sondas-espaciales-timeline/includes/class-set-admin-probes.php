@@ -260,6 +260,7 @@ class SET_Admin_Probes {
 			'end_date'    => '',
 			'status'      => 'finalizada',
 			'note'        => '',
+			'waypoints'   => array(),
 		);
 		$errors = array();
 
@@ -358,11 +359,56 @@ class SET_Admin_Probes {
 					</tr>
 				</table>
 
+				<h2><?php esc_html_e( 'Destinos adicionales', 'sondas-espaciales-timeline' ); ?></h2>
+				<p class="description"><?php esc_html_e( 'Para sondas que sobrevuelan o visitan más de un destino (p. ej. Voyager 1/2, Pioneer 10/11, New Horizons): añade cada destino intermedio con su fecha, además del destino principal de arriba.', 'sondas-espaciales-timeline' ); ?></p>
+				<table class="widefat set-admin-waypoints" id="set-waypoints-table">
+					<thead>
+						<tr>
+							<th><?php esc_html_e( 'Destino', 'sondas-espaciales-timeline' ); ?></th>
+							<th><?php esc_html_e( 'Fecha', 'sondas-espaciales-timeline' ); ?></th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $values['waypoints'] as $waypoint ) : ?>
+							<?php echo self::render_waypoint_row( $waypoint, $destinations ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+				<p><button type="button" class="button" id="set-add-waypoint"><?php esc_html_e( '+ Añadir destino', 'sondas-espaciales-timeline' ); ?></button></p>
+				<template id="set-waypoint-template"><?php echo self::render_waypoint_row( array( 'destination' => '', 'date' => '' ), $destinations ); // phpcs:ignore WordPress.Security.EscapeOutput ?></template>
+
 				<?php submit_button( __( 'Guardar sonda', 'sondas-espaciales-timeline' ) ); ?>
 				<a href="<?php echo esc_url( add_query_arg( array( 'page' => SET_Admin::PAGE_PROBES ), admin_url( 'admin.php' ) ) ); ?>"><?php esc_html_e( 'Cancelar', 'sondas-espaciales-timeline' ); ?></a>
 			</form>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Una fila (destino + fecha) del repetidor de "destinos adicionales".
+	 *
+	 * @param array $waypoint     { destination, date }.
+	 * @param array $destinations Catálogo de destinos.
+	 * @return string
+	 */
+	private static function render_waypoint_row( array $waypoint, array $destinations ) {
+		ob_start();
+		?>
+		<tr class="set-waypoint-row">
+			<td>
+				<select name="waypoint_destination[]">
+					<option value=""><?php esc_html_e( '— Selecciona —', 'sondas-espaciales-timeline' ); ?></option>
+					<?php foreach ( $destinations as $key => $destination_data ) : ?>
+						<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $waypoint['destination'] ?? '', $key ); ?>><?php echo esc_html( $destination_data['label'] ); ?></option>
+					<?php endforeach; ?>
+				</select>
+			</td>
+			<td><input type="date" name="waypoint_date[]" value="<?php echo esc_attr( $waypoint['date'] ?? '' ); ?>" /></td>
+			<td><button type="button" class="button-link set-remove-waypoint"><?php esc_html_e( 'Quitar', 'sondas-espaciales-timeline' ); ?></button></td>
+		</tr>
+		<?php
+		return trim( ob_get_clean() );
 	}
 
 	/**
@@ -433,6 +479,7 @@ class SET_Admin_Probes {
 		$launch_date  = self::sanitize_date( $_POST['launch_date'] ?? '' );
 		$end_date     = self::sanitize_date( $_POST['end_date'] ?? '' );
 		$note         = sanitize_textarea_field( wp_unslash( $_POST['note'] ?? '' ) );
+		$waypoints    = self::parse_waypoints( $_POST['waypoint_destination'] ?? array(), $_POST['waypoint_date'] ?? array() );
 
 		if ( 'activa' === $status ) {
 			$end_year = null;
@@ -478,7 +525,18 @@ class SET_Admin_Probes {
 			$errors[] = __( 'El año de la fecha de fin no coincide con el año de fin indicado.', 'sondas-espaciales-timeline' );
 		}
 
-		$values = compact( 'id', 'name', 'agency', 'destination', 'launch_year', 'end_year', 'launch_date', 'end_date', 'status', 'note' );
+		foreach ( $waypoints as $waypoint ) {
+			if ( ! isset( $destinations[ $waypoint['destination'] ] ) ) {
+				$errors[] = sprintf(
+					/* translators: %s: destino adicional indicado. */
+					__( 'Uno de los destinos adicionales ("%s") no es válido.', 'sondas-espaciales-timeline' ),
+					$waypoint['destination']
+				);
+				break;
+			}
+		}
+
+		$values = compact( 'id', 'name', 'agency', 'destination', 'launch_year', 'end_year', 'launch_date', 'end_date', 'status', 'note', 'waypoints' );
 
 		if ( $errors ) {
 			set_transient(
@@ -504,9 +562,43 @@ class SET_Admin_Probes {
 		}
 
 		SET_Data_Store::save_probe( $values, $is_edit ? $original_id : null );
+		SET_Data_Store::save_probe_waypoints( $id, $waypoints );
 
 		wp_safe_redirect( add_query_arg( array( 'page' => SET_Admin::PAGE_PROBES, 'set_msg' => 'saved' ), admin_url( 'admin.php' ) ) );
 		exit;
+	}
+
+	/**
+	 * Junta y valida los pares destino/fecha del repetidor de "destinos
+	 * adicionales", descartando las filas vacías (sin destino elegido).
+	 *
+	 * @param array $raw_destinations $_POST['waypoint_destination'].
+	 * @param array $raw_dates        $_POST['waypoint_date'].
+	 * @return array Lista de { destination, date, year }.
+	 */
+	private static function parse_waypoints( $raw_destinations, $raw_dates ) {
+		$raw_destinations = is_array( $raw_destinations ) ? wp_unslash( $raw_destinations ) : array();
+		$raw_dates        = is_array( $raw_dates ) ? wp_unslash( $raw_dates ) : array();
+
+		$waypoints = array();
+
+		foreach ( $raw_destinations as $index => $destination ) {
+			$destination = sanitize_key( $destination );
+
+			if ( '' === $destination ) {
+				continue;
+			}
+
+			$date = self::sanitize_date( $raw_dates[ $index ] ?? '' );
+
+			$waypoints[] = array(
+				'destination' => $destination,
+				'date'        => $date,
+				'year'        => $date ? (int) gmdate( 'Y', strtotime( $date ) ) : null,
+			);
+		}
+
+		return $waypoints;
 	}
 
 	/**
@@ -602,6 +694,17 @@ class SET_Admin_Probes {
 			$lines[] = "\t\t'end_date'    => " . ( empty( $probe['end_date'] ) ? 'null' : var_export( $probe['end_date'], true ) ) . ',';
 			$lines[] = "\t\t'status'      => " . var_export( $probe['status'], true ) . ',';
 			$lines[] = "\t\t'note'        => " . var_export( $probe['note'], true ) . ',';
+
+			if ( ! empty( $probe['waypoints'] ) ) {
+				$lines[] = "\t\t'waypoints'   => array(";
+				foreach ( $probe['waypoints'] as $waypoint ) {
+					$lines[] = "\t\t\tarray( 'destination' => " . var_export( $waypoint['destination'], true ) . ', ' .
+						"'date' => " . ( empty( $waypoint['date'] ) ? 'null' : var_export( $waypoint['date'], true ) ) . ', ' .
+						"'year' => " . ( empty( $waypoint['year'] ) ? 'null' : (int) $waypoint['year'] ) . ' ),';
+				}
+				$lines[] = "\t\t),";
+			}
+
 			$lines[] = "\t),";
 		}
 

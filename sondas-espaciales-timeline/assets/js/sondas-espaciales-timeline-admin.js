@@ -42,6 +42,22 @@
 		statusField.on( 'change', toggleEndYear );
 		toggleEndYear();
 
+		// Repetidor de "destinos adicionales" del formulario de sondas:
+		// añadir/quitar filas de destino + fecha.
+		var waypointsBody = $( '#set-waypoints-table tbody' );
+		var waypointTemplate = document.getElementById( 'set-waypoint-template' );
+
+		$( '#set-add-waypoint' ).on( 'click', function () {
+			if ( ! waypointTemplate ) {
+				return;
+			}
+			waypointsBody.append( $( waypointTemplate.content.cloneNode( true ) ) );
+		} );
+
+		waypointsBody.on( 'click', '.set-remove-waypoint', function () {
+			$( this ).closest( 'tr' ).remove();
+		} );
+
 		// Autorrelleno del identificador a partir del nombre/etiqueta,
 		// solo mientras el usuario no haya tocado el campo a mano.
 		var DIACRITICS_REGEX = new RegExp( '[̀-ͯ]', 'g' );

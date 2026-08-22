@@ -62,5 +62,19 @@ class SET_Activator {
 			KEY launch_year (launch_year)
 		) $charset_collate;";
 		dbDelta( $sql_probes );
+
+		$table_waypoints = SET_Data_Store::waypoints_table();
+		$sql_waypoints   = "CREATE TABLE $table_waypoints (
+			id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+			probe_id VARCHAR(64) NOT NULL,
+			destination VARCHAR(32) NOT NULL,
+			event_date DATE NULL,
+			event_year SMALLINT NULL,
+			sort_order SMALLINT NOT NULL DEFAULT 0,
+			PRIMARY KEY  (id),
+			KEY probe_id (probe_id),
+			KEY destination (destination)
+		) $charset_collate;";
+		dbDelta( $sql_waypoints );
 	}
 }

@@ -4,7 +4,7 @@ Tags: sondas, espacio, astronomia, linea de tiempo, exploracion espacial
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.6.0
+Stable tag: 0.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -65,6 +65,13 @@ Desde "Sondas Espaciales" → "Destinos", con su etiqueta, un símbolo corto y u
 Al desactivarlo no se pierde nada. Al desinstalarlo desde el panel de administración sí se borran las tablas propias (`wp_set_probes` y `wp_set_destinations`); si quieres conservar una copia antes, usa el botón "Exportar a PHP" de cada pantalla.
 
 == Changelog ==
+
+= 0.7.0 =
+* Soporte de multi-destino: una sonda puede tener, además de su destino principal, una lista de "destinos adicionales" con su propia fecha (p. ej. las Voyager y Pioneer 11 sobrevolando Júpiter antes de Saturno, o Voyager 2 sobrevolando también Urano y Neptuno; New Horizons sobrevolando Júpiter de camino a Plutón). Se gestionan desde el formulario de la sonda en el panel de administración, con filas repetibles para añadir o quitar destinos.
+* La línea de tiempo (vista Gráfico) muestra un marcador en la barra por cada destino adicional, en la fecha correspondiente, además de distintivos junto al nombre de la sonda. La vista Listado añade una columna "Ruta" con los mismos distintivos. El tooltip de la barra al pasar el ratón no cambia.
+* Nueva tabla `wp_set_probe_waypoints` (destino + fecha por sonda). Borrar una sonda borra también sus destinos adicionales; renombrar un destino reasigna también los destinos adicionales que lo usaban; un destino usado solo como destino adicional (sin ninguna sonda que lo tenga como principal) también bloquea su borrado.
+* Añadido el destino "Plutón" al catálogo; New Horizons pasa a tener a Plutón como destino principal (antes "Varios destinos"), con Júpiter como destino adicional (asistencia gravitatoria de 2007).
+* Voyager 1, Voyager 2 y Pioneer 11 llevan ahora sus sobrevuelos intermedios (con fecha) como destinos adicionales.
 
 = 0.6.0 =
 * Añadida la fecha completa (día/mes/año) de lanzamiento y de fin de misión, además del año: se muestra en la tabla del listado y en el panel de administración (nuevos campos de fecha en el formulario de sondas). El tooltip del gráfico al pasar el ratón por las barras no cambia.

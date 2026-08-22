@@ -84,6 +84,57 @@ class SET_Shortcode {
 	}
 
 	/**
+	 * Año "fraccionario" de una fecha completa (o de un año a secas si no
+	 * hay fecha completa), para poder posicionar marcadores en el eje X.
+	 *
+	 * @param string|null $date Fecha en formato Y-m-d, o null.
+	 * @param int|null    $year Año de respaldo si no hay fecha completa.
+	 * @return float|null
+	 */
+	private static function year_fraction( $date, $year ) {
+		if ( ! empty( $date ) ) {
+			$time = strtotime( $date );
+			if ( $time ) {
+				$day_of_year = (int) date_i18n( 'z', $time );
+				$days_total  = ( '1' === date_i18n( 'L', $time ) ) ? 366 : 365;
+				return (int) date_i18n( 'Y', $time ) + ( $day_of_year / $days_total );
+			}
+		}
+
+		return $year ? (float) $year : null;
+	}
+
+	/**
+	 * HTML de los distintivos (badges) de los destinos adicionales de una
+	 * sonda (además del destino principal), para pintar junto a su nombre.
+	 *
+	 * @param array $probe        Datos de la sonda (incluye 'waypoints').
+	 * @param array $destinations Catálogo de destinos.
+	 * @return string
+	 */
+	private static function build_waypoint_badges( $probe, $destinations ) {
+		if ( empty( $probe['waypoints'] ) ) {
+			return '';
+		}
+
+		$html = '';
+		foreach ( $probe['waypoints'] as $waypoint ) {
+			$destination = $destinations[ $waypoint['destination'] ] ?? array(
+				'label' => $waypoint['destination'],
+				'code'  => '?',
+				'color' => '#888888',
+			);
+			$title = $destination['label'];
+			if ( ! empty( $waypoint['date'] ) || ! empty( $waypoint['year'] ) ) {
+				$title .= ': ' . SET_Data_Store::format_date( $waypoint['date'], $waypoint['year'] );
+			}
+			$html .= '<span class="set-badge set-badge-mini" style="--set-badge-color: ' . esc_attr( $destination['color'] ) . '" title="' . esc_attr( $title ) . '">' . esc_html( $destination['code'] ) . '</span>';
+		}
+
+		return $html;
+	}
+
+	/**
 	 * Construye el texto del tooltip de una sonda.
 	 *
 	 * @param array $probe        Datos de la sonda.
@@ -236,6 +287,7 @@ class SET_Shortcode {
 								<div class="set-row" data-destination="<?php echo esc_attr( $probe['destination'] ); ?>" data-status="<?php echo esc_attr( $probe['status'] ); ?>" data-search="<?php echo esc_attr( $search_haystack ); ?>">
 									<div class="set-row-name">
 										<span class="set-badge" style="--set-badge-color: <?php echo esc_attr( $destination['color'] ); ?>" title="<?php echo esc_attr( $destination['label'] ); ?>"><?php echo esc_html( $destination['code'] ); ?></span>
+										<?php echo self::build_waypoint_badges( $probe, $destinations ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
 										<span class="set-probe-name"><?php echo esc_html( $probe['name'] ); ?></span>
 									</div>
 									<div class="set-row-track">
@@ -244,6 +296,23 @@ class SET_Shortcode {
 											style="--set-launch: <?php echo (int) $probe['launch_year']; ?>; --set-end: <?php echo esc_attr( $end_for_bar ); ?>; --set-badge-color: <?php echo esc_attr( $destination['color'] ); ?>;"
 											title="<?php echo esc_attr( self::build_tooltip( $probe, $destinations ) ); ?>"
 										></span>
+										<?php foreach ( $probe['waypoints'] as $waypoint ) :
+											$wp_year_frac = self::year_fraction( $waypoint['date'], $waypoint['year'] );
+											if ( null === $wp_year_frac ) {
+												continue;
+											}
+											$wp_destination = $destinations[ $waypoint['destination'] ] ?? array(
+												'label' => $waypoint['destination'],
+												'code'  => '?',
+												'color' => '#888888',
+											);
+											?>
+											<span
+												class="set-waypoint-marker"
+												style="left: calc((<?php echo esc_attr( $wp_year_frac ); ?> - var(--set-start-year)) * var(--set-year-width)); --set-badge-color: <?php echo esc_attr( $wp_destination['color'] ); ?>;"
+												title="<?php echo esc_attr( $wp_destination['label'] . ': ' . SET_Data_Store::format_date( $waypoint['date'], $waypoint['year'] ) ); ?>"
+											></span>
+										<?php endforeach; ?>
 									</div>
 								</div>
 							<?php endforeach; ?>
@@ -262,6 +331,7 @@ class SET_Shortcode {
 								<th data-key="name" data-type="string"><?php esc_html_e( 'Nombre', 'sondas-espaciales-timeline' ); ?></th>
 								<th data-key="agency" data-type="string"><?php esc_html_e( 'Agencia', 'sondas-espaciales-timeline' ); ?></th>
 								<th data-key="destinationLabel" data-type="string"><?php esc_html_e( 'Destino', 'sondas-espaciales-timeline' ); ?></th>
+								<th><?php esc_html_e( 'Ruta', 'sondas-espaciales-timeline' ); ?></th>
 								<th data-key="launchYear" data-type="number"><?php esc_html_e( 'Lanzamiento', 'sondas-espaciales-timeline' ); ?></th>
 								<th data-key="endYear" data-type="number"><?php esc_html_e( 'Fin', 'sondas-espaciales-timeline' ); ?></th>
 								<th data-key="statusLabel" data-type="string"><?php esc_html_e( 'Estado', 'sondas-espaciales-timeline' ); ?></th>
@@ -303,6 +373,13 @@ class SET_Shortcode {
 									<td><?php echo esc_html( $probe['name'] ); ?></td>
 									<td><?php echo esc_html( $probe['agency'] ); ?></td>
 									<td><?php echo esc_html( $destination['label'] ); ?></td>
+									<td>
+										<?php if ( empty( $probe['waypoints'] ) ) : ?>
+											&#8212;
+										<?php else : ?>
+											<?php echo self::build_waypoint_badges( $probe, $destinations ); // phpcs:ignore WordPress.Security.EscapeOutput ?>
+										<?php endif; ?>
+									</td>
 									<td><?php echo esc_html( SET_Data_Store::format_date( $probe['launch_date'], $probe['launch_year'] ) ); ?></td>
 									<td><?php echo esc_html( SET_Data_Store::format_date( $probe['end_date'], $probe['end_year'] ) ); ?></td>
 									<td><span class="set-status-pill set-status-<?php echo esc_attr( $probe['status'] ); ?>"><?php echo esc_html( $status_label ); ?></span></td>

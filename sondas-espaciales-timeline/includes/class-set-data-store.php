@@ -52,6 +52,17 @@ class SET_Data_Store {
 	}
 
 	/**
+	 * Nombre de la tabla de destinos intermedios de cada sonda (con el
+	 * prefijo de WordPress).
+	 *
+	 * @return string
+	 */
+	public static function waypoints_table() {
+		global $wpdb;
+		return $wpdb->prefix . 'set_probe_waypoints';
+	}
+
+	/**
 	 * Listado de sondas "de fábrica", tal cual vienen en el repositorio.
 	 * Se usa para sembrar las tablas en la primera activación y para el
 	 * botón "Restaurar valores de fábrica" del panel de administración.
@@ -110,6 +121,108 @@ class SET_Data_Store {
 		}
 
 		return $fallback_year ? (string) $fallback_year : '—';
+	}
+
+	/**
+	 * Convierte una fila de `set_probe_waypoints` al formato usado en el
+	 * resto del plugin.
+	 *
+	 * @param array $row Fila devuelta por $wpdb (ARRAY_A).
+	 * @return array
+	 */
+	private static function normalize_waypoint_row( $row ) {
+		return array(
+			'destination' => $row['destination'],
+			'date'        => empty( $row['event_date'] ) ? null : $row['event_date'],
+			'year'        => ( null === $row['event_year'] || '' === $row['event_year'] ) ? null : (int) $row['event_year'],
+		);
+	}
+
+	/**
+	 * Destinos adicionales de una sonda (por ejemplo, los sobrevuelos de
+	 * Júpiter, Saturno, Urano y Neptuno de una Voyager), ordenados tal y
+	 * como se guardaron.
+	 *
+	 * @param string $probe_id Id de la sonda.
+	 * @return array Lista de { destination, date, year }.
+	 */
+	public static function get_probe_waypoints( $probe_id ) {
+		global $wpdb;
+
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT destination, event_date, event_year FROM ' . self::waypoints_table() . ' WHERE probe_id = %s ORDER BY sort_order ASC, id ASC',
+				$probe_id
+			),
+			ARRAY_A
+		);
+
+		return array_map( array( __CLASS__, 'normalize_waypoint_row' ), (array) $rows );
+	}
+
+	/**
+	 * Destinos adicionales de varias sondas a la vez, agrupados por
+	 * probe_id. Evita N+1 consultas al listar todas las sondas.
+	 *
+	 * @param array $probe_ids Ids de sonda.
+	 * @return array probe_id => lista de { destination, date, year }.
+	 */
+	public static function get_waypoints_for_probes( array $probe_ids ) {
+		global $wpdb;
+
+		if ( empty( $probe_ids ) ) {
+			return array();
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $probe_ids ), '%s' ) );
+		$sql          = 'SELECT probe_id, destination, event_date, event_year FROM ' . self::waypoints_table() . " WHERE probe_id IN ($placeholders) ORDER BY sort_order ASC, id ASC";
+		$rows         = $wpdb->get_results( $wpdb->prepare( $sql, $probe_ids ), ARRAY_A );
+
+		$grouped = array();
+		foreach ( (array) $rows as $row ) {
+			$grouped[ $row['probe_id'] ][] = self::normalize_waypoint_row( $row );
+		}
+
+		return $grouped;
+	}
+
+	/**
+	 * Sustituye los destinos adicionales de una sonda por los indicados
+	 * (borra todos los que tuviera y vuelve a insertar la lista nueva).
+	 *
+	 * @param string $probe_id  Id de la sonda.
+	 * @param array  $waypoints Lista de { destination, date, year }.
+	 */
+	public static function save_probe_waypoints( $probe_id, array $waypoints ) {
+		global $wpdb;
+
+		$table = self::waypoints_table();
+		$wpdb->delete( $table, array( 'probe_id' => $probe_id ), array( '%s' ) );
+
+		foreach ( array_values( $waypoints ) as $order => $waypoint ) {
+			$wpdb->insert(
+				$table,
+				array(
+					'probe_id'    => $probe_id,
+					'destination' => $waypoint['destination'],
+					'event_date'  => $waypoint['date'] ?? null,
+					'event_year'  => $waypoint['year'] ?? null,
+					'sort_order'  => $order,
+				),
+				array( '%s', '%s', '%s', '%d', '%d' )
+			);
+		}
+	}
+
+	/**
+	 * Borra todos los destinos adicionales de una sonda.
+	 *
+	 * @param string $probe_id Id de la sonda.
+	 */
+	public static function delete_probe_waypoints( $probe_id ) {
+		global $wpdb;
+
+		$wpdb->delete( self::waypoints_table(), array( 'probe_id' => $probe_id ), array( '%s' ) );
 	}
 
 	/**
@@ -174,6 +287,21 @@ class SET_Data_Store {
 	}
 
 	/**
+	 * Cuántos destinos adicionales (de cualquier sonda) usan actualmente
+	 * este destino.
+	 *
+	 * @param string $id Clave del destino.
+	 * @return int
+	 */
+	public static function count_waypoints_by_destination( $id ) {
+		global $wpdb;
+
+		return (int) $wpdb->get_var(
+			$wpdb->prepare( 'SELECT COUNT(*) FROM ' . self::waypoints_table() . ' WHERE destination = %s', $id )
+		);
+	}
+
+	/**
 	 * Crea o actualiza un destino. Si se renombra la clave (id !== id
 	 * original), las sondas que apuntaban a la clave antigua se
 	 * reasignan automáticamente a la nueva.
@@ -199,6 +327,7 @@ class SET_Data_Store {
 		if ( $already_here ) {
 			if ( $id !== $original_id ) {
 				$wpdb->update( self::probes_table(), array( 'destination' => $id ), array( 'destination' => $original_id ), array( '%s' ), array( '%s' ) );
+				$wpdb->update( self::waypoints_table(), array( 'destination' => $id ), array( 'destination' => $original_id ), array( '%s' ), array( '%s' ) );
 			}
 			$wpdb->update( $table, $payload, array( 'id' => $original_id ), array( '%s', '%s', '%s', '%s' ), array( '%s' ) );
 		} else {
@@ -215,7 +344,7 @@ class SET_Data_Store {
 	public static function delete_destination( $id ) {
 		global $wpdb;
 
-		$in_use = self::count_probes_by_destination( $id );
+		$in_use = self::count_probes_by_destination( $id ) + self::count_waypoints_by_destination( $id );
 
 		if ( $in_use > 0 ) {
 			return $in_use;
@@ -235,9 +364,16 @@ class SET_Data_Store {
 	public static function get_probes() {
 		global $wpdb;
 
-		$rows = $wpdb->get_results( 'SELECT * FROM ' . self::probes_table() . ' ORDER BY launch_year ASC, name ASC', ARRAY_A );
+		$rows   = $wpdb->get_results( 'SELECT * FROM ' . self::probes_table() . ' ORDER BY launch_year ASC, name ASC', ARRAY_A );
+		$probes = array_map( array( __CLASS__, 'normalize_probe_row' ), (array) $rows );
 
-		return array_map( array( __CLASS__, 'normalize_probe_row' ), (array) $rows );
+		$waypoints_by_probe = self::get_waypoints_for_probes( wp_list_pluck( $probes, 'id' ) );
+		foreach ( $probes as &$probe ) {
+			$probe['waypoints'] = $waypoints_by_probe[ $probe['id'] ] ?? array();
+		}
+		unset( $probe );
+
+		return $probes;
 	}
 
 	/**
@@ -316,7 +452,14 @@ class SET_Data_Store {
 			ARRAY_A
 		);
 
-		return $row ? self::normalize_probe_row( $row ) : null;
+		if ( ! $row ) {
+			return null;
+		}
+
+		$probe              = self::normalize_probe_row( $row );
+		$probe['waypoints'] = self::get_probe_waypoints( $id );
+
+		return $probe;
 	}
 
 	/**
@@ -363,6 +506,7 @@ class SET_Data_Store {
 		global $wpdb;
 
 		$wpdb->delete( self::probes_table(), array( 'id' => $id ), array( '%s' ) );
+		self::delete_probe_waypoints( $id );
 	}
 
 	/**
@@ -417,6 +561,10 @@ class SET_Data_Store {
 					),
 					array( '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%s' )
 				);
+
+				if ( ! empty( $probe['waypoints'] ) ) {
+					self::save_probe_waypoints( $probe['id'], $probe['waypoints'] );
+				}
 			}
 		}
 	}
@@ -428,10 +576,13 @@ class SET_Data_Store {
 	public static function reset_to_defaults() {
 		global $wpdb;
 
-		// TRUNCATE reinicia también el recuento, aunque aquí no se use
-		// autoincremento (la clave primaria es el slug).
+		// TRUNCATE reinicia también el recuento, aunque en set_probes y
+		// set_destinations no se use autoincremento (la clave primaria es
+		// el slug); en set_probe_waypoints sí, y también nos interesa
+		// reiniciarlo.
 		$wpdb->query( 'TRUNCATE TABLE ' . self::probes_table() );
 		$wpdb->query( 'TRUNCATE TABLE ' . self::destinations_table() );
+		$wpdb->query( 'TRUNCATE TABLE ' . self::waypoints_table() );
 
 		self::maybe_seed_defaults();
 	}

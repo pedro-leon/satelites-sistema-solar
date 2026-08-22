@@ -205,6 +205,9 @@ return array(
 		'end_year'    => 1995,
 		'status'      => 'perdida',
 		'note'        => 'Primer sobrevuelo de Saturno.',
+		'waypoints'   => array(
+			array( 'destination' => 'jupiter', 'date' => '1974-12-04', 'year' => null ),
+		),
 	),
 	array(
 		'id'          => 'mars-6',
@@ -269,6 +272,12 @@ return array(
 		'end_year'    => null,
 		'status'      => 'activa',
 		'note'        => 'Sobrevoló Júpiter, Saturno, Urano y Neptuno; en espacio interestelar desde 2018.',
+		'waypoints'   => array(
+			array( 'destination' => 'jupiter', 'date' => '1979-07-09', 'year' => null ),
+			array( 'destination' => 'saturno', 'date' => '1981-08-25', 'year' => null ),
+			array( 'destination' => 'urano', 'date' => '1986-01-24', 'year' => null ),
+			array( 'destination' => 'neptuno', 'date' => '1989-08-25', 'year' => null ),
+		),
 	),
 	array(
 		'id'          => 'voyager-1',
@@ -279,6 +288,10 @@ return array(
 		'end_year'    => null,
 		'status'      => 'activa',
 		'note'        => 'Objeto artificial más lejano de la Tierra; en espacio interestelar desde 2012.',
+		'waypoints'   => array(
+			array( 'destination' => 'jupiter', 'date' => '1979-03-05', 'year' => null ),
+			array( 'destination' => 'saturno', 'date' => '1980-11-12', 'year' => null ),
+		),
 	),
 	array(
 		'id'          => 'pioneer-venus-1',
@@ -626,11 +639,14 @@ return array(
 		'id'          => 'new-horizons',
 		'name'        => 'New Horizons',
 		'agency'      => 'NASA',
-		'destination' => 'multiple',
+		'destination' => 'pluton',
 		'launch_year' => 2006,
 		'end_year'    => null,
 		'status'      => 'activa',
 		'note'        => 'Sobrevuelos de Plutón (2015) y Arrokoth (2019); rumbo al cinturón de Kuiper.',
+		'waypoints'   => array(
+			array( 'destination' => 'jupiter', 'date' => '2007-02-28', 'year' => null ),
+		),
 	),
 	array(
 		'id'          => 'chandrayaan-1',

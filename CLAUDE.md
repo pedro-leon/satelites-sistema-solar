@@ -26,24 +26,60 @@ pueda retomar el trabajo en curso sin perder contexto.
   cada sonda puede tener la fecha completa (día/mes/año), visible en la
   tabla del listado y en el panel de admin (el tooltip del gráfico al
   pasar el ratón por las barras se deja tal cual, a petición expresa del
-  usuario — no tocarlo). Ver su propio `readme.txt` para el detalle de
-  versión/changelog.
+  usuario — no tocarlo). Desde la v0.7.0, una sonda puede además tener
+  "destinos adicionales" (multi-destino): además de su destino
+  principal, una lista de destinos intermedios con su propia fecha
+  (p. ej. Voyager 1/2 y Pioneer 11 sobrevolando Júpiter antes de llegar
+  a Saturno; Voyager 2 sobrevolando también Urano y Neptuno; New
+  Horizons sobrevolando Júpiter de camino a Plutón). Se ven como
+  distintivos junto al nombre y como marcadores sobre la barra en el
+  gráfico (con su propio `title`, sin tocar el tooltip de la barra), y
+  como una columna "Ruta" en el listado. Ver su propio `readme.txt`
+  para el detalle de versión/changelog.
 
-  **Pendiente (pedido por el usuario, aún sin empezar):** soporte de
-  multi-destino con fecha por sonda — sondas como Voyager 1, Voyager 2,
-  Pioneer 10, Pioneer 11 o New Horizons pasan por varios destinos
-  (p. ej. Júpiter → Saturno → Urano → Neptuno), cada uno con su propia
-  fecha de sobrevuelo/llegada, tal y como aparecen desglosados en los
-  PDF de Wikipedia. Habrá que: una tabla nueva de waypoints
-  (probe_id, destination, date, orden), extender `SET_Data_Store`,
-  añadir filas repetibles (añadir/quitar) en el formulario de sonda del
-  admin, y decidir cómo se pintan en el gráfico (¿icono extra en la
-  barra por cada destino intermedio?) y en la tabla de listado. El
-  campo `destination` actual de la sonda seguiría siendo el destino
-  "principal" (icono junto al nombre, filtro por destino); los
-  waypoints serían un desglose adicional opcional.
+### Destinos adicionales / multi-destino (`SET_Data_Store::*_waypoints*`, desde v0.7.0)
 
-## Modelo de datos (sondas-espaciales-timeline, desde v0.5.0)
+  Tabla `wp_set_probe_waypoints` (`probe_id`, `destination`, `event_date`
+  DATE NULL, `event_year` SMALLINT NULL, `sort_order`). El campo
+  `destination` de la sonda sigue siendo el destino "principal" (icono
+  junto al nombre, filtro por destino, color de la barra); los waypoints
+  son un desglose adicional opcional, en el orden en que se guardan (no
+  se reordenan automáticamente por fecha).
+  - `SET_Data_Store::get_probe_waypoints( $probe_id )` /
+    `get_waypoints_for_probes( $ids )` (bulk, evita N+1 en `get_probes()`)
+    / `save_probe_waypoints( $probe_id, $waypoints )` (borra todos e
+    inserta de nuevo — reemplazo completo, no hay update parcial) /
+    `delete_probe_waypoints( $probe_id )`.
+  - `delete_probe()` borra también los waypoints de esa sonda.
+    `save_destination()` (al renombrar el `id`) reasigna también los
+    waypoints que usaban la clave vieja. `delete_destination()` está
+    bloqueado si el destino está en uso como principal **o** como
+    waypoint de cualquier sonda (`count_probes_by_destination()` +
+    `count_waypoints_by_destination()`); la pantalla de administración
+    de destinos muestra ambos recuentos por separado.
+  - Panel de admin (`SET_Admin_Probes`): formulario con una sección
+    "Destinos adicionales", filas repetibles (destino + fecha) con
+    botones "+ Añadir destino" / "Quitar" (JS en
+    `sondas-espaciales-timeline-admin.js`, usando un `<template>` y
+    `content.cloneNode(true)`). `handle_save()` reconstruye la lista
+    desde `$_POST['waypoint_destination'][]` / `waypoint_date[]`,
+    descarta filas sin destino elegido y valida que cada destino exista.
+  - Seed (`includes/data/probes.php`): clave opcional `'waypoints'`,
+    array de `array( 'destination' => ..., 'date' => 'Y-m-d'|null,
+    'year' => int|null )`. Ya rellenada para `voyager-1`, `voyager-2`,
+    `pioneer-11` y `new-horizons` (fechas de sobrevuelo reales, sacadas
+    de las tablas "Jupiter probes"/"Saturn probes"/"Uranus probes"/
+    "Neptune probes" de "List of Solar System probes"). `pioneer-10`
+    solo visitó Júpiter, así que no lleva waypoints. Se añadió también
+    un destino nuevo al catálogo, `pluton` (♇), y `new-horizons` pasó a
+    tener `destination = 'pluton'` (antes `'multiple'`), con Júpiter
+    como waypoint (asistencia gravitatoria de 2007).
+  - El botón "Exportar a PHP" del admin también exporta los waypoints
+    de cada sonda (bloque `'waypoints' => array( array( 'destination'
+    => ..., 'date' => ..., 'year' => ... ), ... )`), solo si la sonda
+    tiene alguno.
+
+## Modelo de datos (sondas-espaciales-timeline, desde v0.5.0; ampliado en v0.6.0 y v0.7.0)
 
 Los datos **ya no son ficheros PHP estáticos**: viven en dos tablas
 propias de la base de datos de WordPress, `{prefix}set_probes` y
@@ -80,10 +116,11 @@ shortcode ni el admin tocan `$wpdb` directamente.
   toca nada.
 
 A fecha de la última sesión: **235 sondas** en la semilla de fábrica
-(`includes/data/probes.php`, v0.6.0; el número de sondas no cambió en la
-v0.6.0, solo se completaron fechas). Desglose aproximado por destino:
-Luna 89, Marte 51, Venus 40, heliofísica 15, asteroide 12, cometa 9,
-Júpiter 5, Sol 4, Mercurio 3, múltiple 3, Saturno 2, interestelar 2.
+(`includes/data/probes.php`, v0.7.0; el número de sondas no cambió en la
+v0.6.0 ni en la v0.7.0). Desglose aproximado por destino (destino
+principal, no cuenta los waypoints): Luna 89, Marte 51, Venus 40,
+heliofísica 15, asteroide 12, cometa 9, Júpiter 5, Sol 4, Mercurio 3,
+Saturno 2, interestelar 2, múltiple 2, Plutón 1.
 
 ### Fechas completas (`launch_date`/`end_date`, desde v0.6.0)
 

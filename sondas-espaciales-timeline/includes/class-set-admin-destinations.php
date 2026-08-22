@@ -109,8 +109,10 @@ class SET_Admin_Destinations {
 						</tr>
 					<?php endif; ?>
 					<?php foreach ( $destinations as $key => $destination ) :
-						$probe_count = SET_Data_Store::count_probes_by_destination( $key );
-						$edit_url    = add_query_arg( array( 'page' => SET_Admin::PAGE_DESTINATIONS, 'action' => 'edit', 'id' => $key ), admin_url( 'admin.php' ) );
+						$probe_count    = SET_Data_Store::count_probes_by_destination( $key );
+						$waypoint_count = SET_Data_Store::count_waypoints_by_destination( $key );
+						$in_use_count   = $probe_count + $waypoint_count;
+						$edit_url       = add_query_arg( array( 'page' => SET_Admin::PAGE_DESTINATIONS, 'action' => 'edit', 'id' => $key ), admin_url( 'admin.php' ) );
 						$delete_url  = wp_nonce_url(
 							add_query_arg( array( 'action' => self::ACTION_DELETE, 'id' => $key ), admin_url( 'admin-post.php' ) ),
 							self::ACTION_DELETE . '_' . $key
@@ -130,10 +132,23 @@ class SET_Admin_Destinations {
 								<?php if ( $probe_count > 0 ) : ?>
 									<a href="<?php echo esc_url( add_query_arg( array( 'page' => SET_Admin::PAGE_PROBES, 'destino' => $key ), admin_url( 'admin.php' ) ) ); ?>"><?php esc_html_e( '(ver)', 'sondas-espaciales-timeline' ); ?></a>
 								<?php endif; ?>
+								<?php if ( $waypoint_count > 0 ) : ?>
+									<br /><span class="description">
+										<?php
+										echo esc_html(
+											sprintf(
+												/* translators: %d: número de sondas que lo usan como destino adicional. */
+												_n( '+%d como destino adicional', '+%d como destinos adicionales', $waypoint_count, 'sondas-espaciales-timeline' ),
+												$waypoint_count
+											)
+										);
+										?>
+									</span>
+								<?php endif; ?>
 							</td>
 							<td>
 								<a href="<?php echo esc_url( $edit_url ); ?>"><?php esc_html_e( 'Editar', 'sondas-espaciales-timeline' ); ?></a>
-								<?php if ( 0 === $probe_count ) : ?>
+								<?php if ( 0 === $in_use_count ) : ?>
 									|
 									<a href="<?php echo esc_url( $delete_url ); ?>" class="set-admin-delete-link" data-confirm="<?php echo esc_attr( sprintf( /* translators: %s: etiqueta del destino. */ __( '¿Borrar el destino «%s»?', 'sondas-espaciales-timeline' ), $destination['label'] ) ); ?>"><?php esc_html_e( 'Borrar', 'sondas-espaciales-timeline' ); ?></a>
 								<?php else : ?>
