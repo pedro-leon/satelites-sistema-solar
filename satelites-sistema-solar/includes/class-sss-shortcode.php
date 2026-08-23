@@ -106,9 +106,10 @@ class SSS_Shortcode {
 					</ul>
 				</div>
 
-				<div class="sss-explorer" hidden>
-					<h4 class="sss-explorer-title"></h4>
-					<div class="sss-table-wrapper">
+				<div class="sss-explorer">
+					<h4 class="sss-explorer-title" hidden></h4>
+					<p class="sss-explorer-hint"><?php esc_html_e( 'Pulsa en un planeta para ver el listado de sus satélites.', 'satelites-sistema-solar' ); ?></p>
+					<div class="sss-table-wrapper" hidden>
 						<table class="sss-table">
 							<thead>
 								<tr>
@@ -145,6 +146,13 @@ class SSS_Shortcode {
 
 		</div>
 		<?php
-		return ob_get_clean();
+		$html = ob_get_clean();
+
+		// Colapsa el espacio en blanco entre etiquetas (sin tocar el texto).
+		// Algunos temas y constructores de página (p. ej. Elementor) pasan el
+		// contenido del shortcode por wpautop(), que puede insertar <p>/<br>
+		// de más al ver saltos de línea sueltos entre etiquetas y romper el
+		// diseño (espacios raros, recuadros descolocados...).
+		return preg_replace( '/>\s+</', '><', $html );
 	}
 }

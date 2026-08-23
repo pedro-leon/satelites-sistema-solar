@@ -1,3 +1,46 @@
+/*
+ * El shortcode se inserta en temas y constructores de página (Elementor,
+ * bloques...) que suelen traer sus propios estilos globales para
+ * elementos genéricos como <button>, <h3>, <h4>, <p> o <table>. Para que
+ * el plugin se vea igual en cualquier sitio, primero se resetean esos
+ * elementos dentro de .sss-wrapper y luego se vuelve a definir todo lo
+ * necesario con selectores AL MENOS tan específicos como el reset
+ * (".sss-wrapper .algo", nunca una clase sola), usando !important en las
+ * propiedades que importan para la estructura. Así se garantiza que
+ * nuestras reglas ganan tanto al reset propio como al CSS del tema.
+ */
+.sss-wrapper,
+.sss-wrapper *,
+.sss-wrapper *::before,
+.sss-wrapper *::after {
+	box-sizing: border-box !important;
+}
+
+.sss-wrapper h3,
+.sss-wrapper h4,
+.sss-wrapper p,
+.sss-wrapper ul,
+.sss-wrapper li,
+.sss-wrapper table,
+.sss-wrapper th,
+.sss-wrapper td,
+.sss-wrapper button {
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	border-radius: 0 !important;
+	background: none !important;
+	box-shadow: none !important;
+	text-transform: none !important;
+	text-decoration: none !important;
+	list-style: none !important;
+	font-size: inherit;
+	font-weight: normal;
+	line-height: inherit;
+	color: inherit;
+	text-align: left;
+}
+
 .sss-wrapper {
 	--sss-border: #dcdcde;
 	--sss-accent: #2271b1;
@@ -6,135 +49,152 @@
 	line-height: 1.4;
 }
 
-.sss-notice {
-	padding: 0.75em 1em;
-	background: var(--sss-bg-alt);
-	border-left: 4px solid var(--sss-accent);
+.sss-wrapper .sss-notice {
+	padding: 0.75em 1em !important;
+	background: var(--sss-bg-alt) !important;
+	border-left: 4px solid var(--sss-accent) !important;
 }
 
 /* Resumen por planeta */
 
-.sss-summary {
-	margin-bottom: 0.75em;
+.sss-wrapper .sss-summary {
+	margin-bottom: 0.75em !important;
 }
 
-.sss-summary-title {
-	margin: 0 0 0.5em;
-	text-align: center;
-}
-
-.sss-summary-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-	gap: 0.4em;
-	list-style: none;
-	margin: 0;
-	padding: 0;
-}
-
-.sss-summary-item {
-	background: var(--sss-bg-alt);
-	border: 1px solid var(--sss-border);
-	border-radius: 5px;
-	text-align: center;
-}
-
-.sss-planet-button {
-	display: flex;
-	width: 100%;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	gap: 0.1em;
-	margin: 0;
-	padding: 0.5em 0.4em;
-	background: transparent;
-	border: 0;
-	border-radius: inherit;
-	cursor: pointer;
-	font: inherit;
-	color: inherit;
-}
-
-.sss-planet-button:hover,
-.sss-planet-button:focus-visible {
-	background: #eaeaea;
-}
-
-.sss-summary-item.is-active {
-	border-color: var(--sss-accent);
-}
-
-.sss-summary-item.is-active .sss-planet-button {
-	background: var(--sss-accent);
-	color: #fff;
-}
-
-.sss-summary-item.is-active .sss-planet-count {
-	color: #fff;
-}
-
-.sss-planet-name {
-	font-weight: 600;
-	font-size: 0.9em;
-}
-
-.sss-planet-count {
-	font-size: 1.3em;
+.sss-wrapper .sss-summary-title {
+	margin: 0 0 0.5em !important;
+	text-align: center !important;
+	font-size: 1.2em;
 	font-weight: 700;
-	color: var(--sss-accent);
 }
 
-.sss-summary-total {
-	padding: 0.5em 0.4em;
-	background: var(--sss-accent);
-	border-color: var(--sss-accent);
+.sss-wrapper .sss-summary-grid {
+	display: grid !important;
+	grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) !important;
+	gap: 0.4em !important;
+	margin: 0 !important;
+	padding: 0 !important;
 }
 
-.sss-summary-total .sss-planet-name,
-.sss-summary-total .sss-planet-count {
-	color: #fff;
+.sss-wrapper .sss-summary-item {
+	background: var(--sss-bg-alt) !important;
+	border: 1px solid var(--sss-border) !important;
+	border-radius: 5px !important;
+	text-align: center !important;
+	overflow: hidden;
+}
+
+.sss-wrapper .sss-planet-button {
+	display: flex !important;
+	flex-direction: column !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 100% !important;
+	gap: 0.1em !important;
+	padding: 0.5em 0.3em !important;
+	background: transparent !important;
+	cursor: pointer !important;
+	font-family: inherit;
+}
+
+.sss-wrapper .sss-planet-button:hover,
+.sss-wrapper .sss-planet-button:focus-visible {
+	background: #e2e2e2 !important;
+}
+
+.sss-wrapper .sss-summary-item.is-active {
+	border-color: var(--sss-accent) !important;
+}
+
+.sss-wrapper .sss-summary-item.is-active .sss-planet-button {
+	background: var(--sss-accent) !important;
+	color: #fff !important;
+}
+
+.sss-wrapper .sss-summary-item.is-active .sss-planet-count {
+	color: #fff !important;
+}
+
+.sss-wrapper .sss-planet-name {
+	display: block !important;
+	font-weight: 600 !important;
+	font-size: 0.8em !important;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 100%;
+}
+
+.sss-wrapper .sss-planet-count {
+	display: block !important;
+	font-size: 1.2em !important;
+	font-weight: 700 !important;
+	color: var(--sss-accent) !important;
+}
+
+.sss-wrapper .sss-summary-total {
+	display: flex !important;
+	flex-direction: column !important;
+	align-items: center !important;
+	justify-content: center !important;
+	padding: 0.5em 0.3em !important;
+	background: var(--sss-accent) !important;
+	border-color: var(--sss-accent) !important;
+}
+
+.sss-wrapper .sss-summary-total .sss-planet-name,
+.sss-wrapper .sss-summary-total .sss-planet-count {
+	color: #fff !important;
 }
 
 /* Listado de satélites del planeta seleccionado */
 
-.sss-explorer {
-	margin-top: 0.75em;
+.sss-wrapper .sss-explorer {
+	margin-top: 0.75em !important;
 }
 
-.sss-explorer-title {
-	margin: 0 0 0.4em;
+.sss-wrapper .sss-explorer-title {
+	margin: 0 0 0.4em !important;
+	font-size: 1.05em;
+	font-weight: 700;
 }
 
-.sss-table-wrapper {
+.sss-wrapper .sss-explorer-hint {
+	padding: 0.75em 1em !important;
+	background: var(--sss-bg-alt) !important;
+	font-style: italic;
+}
+
+.sss-wrapper .sss-table-wrapper {
 	overflow-x: auto;
 }
 
-.sss-table {
-	width: 100%;
-	border-collapse: collapse;
+.sss-wrapper .sss-table {
+	width: 100% !important;
+	border-collapse: collapse !important;
 }
 
-.sss-table th,
-.sss-table td {
-	padding: 0.4em 0.6em;
-	border-bottom: 1px solid var(--sss-border);
-	text-align: left;
+.sss-wrapper .sss-table th,
+.sss-wrapper .sss-table td {
+	padding: 0.4em 0.6em !important;
+	border-bottom: 1px solid var(--sss-border) !important;
+	text-align: left !important;
 	white-space: nowrap;
 }
 
-.sss-table thead th {
-	background: var(--sss-bg-alt);
-	cursor: pointer;
+.sss-wrapper .sss-table thead th {
+	background: var(--sss-bg-alt) !important;
+	cursor: pointer !important;
 	user-select: none;
 	position: relative;
+	font-weight: 700 !important;
 }
 
-.sss-table thead th:hover {
-	background: #eaeaea;
+.sss-wrapper .sss-table thead th:hover {
+	background: #eaeaea !important;
 }
 
-.sss-table thead th::after {
+.sss-wrapper .sss-table thead th::after {
 	content: "";
 	display: inline-block;
 	width: 0.6em;
@@ -142,42 +202,42 @@
 	opacity: 0.4;
 }
 
-.sss-table thead th[aria-sort="ascending"]::after {
+.sss-wrapper .sss-table thead th[aria-sort="ascending"]::after {
 	content: "▲";
 	opacity: 1;
 }
 
-.sss-table thead th[aria-sort="descending"]::after {
+.sss-wrapper .sss-table thead th[aria-sort="descending"]::after {
 	content: "▼";
 	opacity: 1;
 }
 
-.sss-table tbody tr:nth-child(odd) {
-	background: var(--sss-bg-alt);
+.sss-wrapper .sss-table tbody tr:nth-child(odd) {
+	background: var(--sss-bg-alt) !important;
 }
 
 /* Columnas numéricas más estrechas: no necesitan tanto ancho como el nombre. */
-.sss-col-diameter_km,
-.sss-col-density,
-.sss-col-discovery_year {
+.sss-wrapper .sss-col-diameter_km,
+.sss-wrapper .sss-col-density,
+.sss-wrapper .sss-col-discovery_year {
 	width: 1%;
-	text-align: right;
+	text-align: right !important;
 }
 
-.sss-col-discoverer.sss-has-more {
+.sss-wrapper .sss-col-discoverer.sss-has-more {
 	cursor: help;
-	text-decoration: underline dotted;
-	text-decoration-color: var(--sss-border);
+	text-decoration: underline dotted !important;
+	text-decoration-color: var(--sss-border) !important;
 	text-underline-offset: 3px;
 }
 
-.sss-empty-message {
-	padding: 0.75em;
+.sss-wrapper .sss-empty-message {
+	padding: 0.75em !important;
 	font-style: italic;
 }
 
-.sss-last-updated {
-	margin-top: 0.75em;
-	font-size: 0.85em;
-	color: #646970;
+.sss-wrapper .sss-last-updated {
+	margin-top: 0.75em !important;
+	font-size: 0.85em !important;
+	color: #646970 !important;
 }

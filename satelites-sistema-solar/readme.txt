@@ -4,7 +4,7 @@ Tags: satelites, lunas, planetas, api, astronomia
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,12 @@ Una vez a la semana, mediante WP-Cron. También se pueden actualizar manualmente
 Los ocho planetas oficiales del sistema solar (Mercurio a Neptuno). No incluye planetas enanos como Plutón.
 
 == Changelog ==
+
+= 1.3.0 =
+* El CSS se blinda frente a temas y constructores de página (p. ej. Elementor) que aplican sus propios estilos globales a `<button>`, `<h3>`, `<p>`, etc., y que hacían que los recuadros de planeta se vieran con los colores del tema y el nombre/número en la misma línea.
+* Antes de elegir un planeta se muestra un aviso ("Pulsa en un planeta para ver el listado de sus satélites.") en lugar de no mostrar nada.
+* El HTML del shortcode se genera más compacto para evitar que `wpautop`/algunos constructores de página añadan espacios de más.
+* Al actualizar el plugin, si hay datos guardados de una versión anterior se refrescan solos en segundo plano (vía WP-Cron) en vez de esperar a la siguiente ejecución semanal o a que alguien pulse "Actualizar datos ahora".
 
 = 1.2.0 =
 * Rediseño del resumen y el listado: menos espaciado, recuadros de planeta más pequeños, título centrado ("Número de satélites por planeta").

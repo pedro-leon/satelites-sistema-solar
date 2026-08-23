@@ -78,12 +78,14 @@
 	}
 
 	function initExplorer( wrapper ) {
-		var buttons  = Array.prototype.slice.call( wrapper.querySelectorAll( '.sss-planet-button' ) );
-		var explorer = wrapper.querySelector( '.sss-explorer' );
-		var title    = wrapper.querySelector( '.sss-explorer-title' );
-		var table    = wrapper.querySelector( '.sss-table' );
-		var tbody    = wrapper.querySelector( '.sss-moons-tbody' );
-		var empty    = wrapper.querySelector( '.sss-empty-message' );
+		var buttons      = Array.prototype.slice.call( wrapper.querySelectorAll( '.sss-planet-button' ) );
+		var explorer     = wrapper.querySelector( '.sss-explorer' );
+		var title        = wrapper.querySelector( '.sss-explorer-title' );
+		var hint         = wrapper.querySelector( '.sss-explorer-hint' );
+		var tableWrapper = wrapper.querySelector( '.sss-table-wrapper' );
+		var table        = wrapper.querySelector( '.sss-table' );
+		var tbody        = wrapper.querySelector( '.sss-moons-tbody' );
+		var empty        = wrapper.querySelector( '.sss-empty-message' );
 
 		if ( ! buttons.length || ! explorer || ! table || ! tbody ) {
 			return;
@@ -176,11 +178,17 @@
 
 		function showPlanet( planetId ) {
 			currentPlanetId = planetId;
-			explorer.hidden = false;
 
+			if ( hint ) {
+				hint.hidden = true;
+			}
 			if ( title ) {
+				title.hidden = false;
 				var template = i18n.explorerTitle || '%s';
 				title.textContent = template.replace( '%s', planetName( planetId ) );
+			}
+			if ( tableWrapper ) {
+				tableWrapper.hidden = false;
 			}
 
 			buttons.forEach( function ( button ) {
@@ -195,7 +203,19 @@
 
 		function hidePlanets() {
 			currentPlanetId = null;
-			explorer.hidden = true;
+
+			if ( hint ) {
+				hint.hidden = false;
+			}
+			if ( title ) {
+				title.hidden = true;
+			}
+			if ( tableWrapper ) {
+				tableWrapper.hidden = true;
+			}
+			if ( empty ) {
+				empty.hidden = true;
+			}
 
 			buttons.forEach( function ( button ) {
 				button.setAttribute( 'aria-expanded', 'false' );
