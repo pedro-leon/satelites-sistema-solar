@@ -4,7 +4,7 @@ Tags: satelites, lunas, planetas, api, astronomia
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,6 +49,12 @@ Una vez a la semana, mediante WP-Cron. También se pueden actualizar manualmente
 Los ocho planetas oficiales del sistema solar (Mercurio a Neptuno). No incluye planetas enanos como Plutón.
 
 == Changelog ==
+
+= 1.2.0 =
+* Rediseño del resumen y el listado: menos espaciado, recuadros de planeta más pequeños, título centrado ("Número de satélites por planeta").
+* Se elimina el selector de planeta: cada recuadro es ahora un botón que muestra/oculta debajo la tabla de sus satélites.
+* Columnas de diámetro, densidad y año más estrechas; en la de descubridor se muestra solo el primer nombre, con el resto visible al pasar el ratón por encima.
+* Corregido el campo de distancia al planeta (la API lo llama "semimajorAxis", no "semiMajorAxis"), que hasta ahora siempre salía vacío. También afectaba, sin que se notara, al orden de los planetas por distancia al Sol.
 
 = 1.1.0 =
 * La API pública ahora exige una clave gratuita (token Bearer). Se añade un campo en el panel de administración para configurarla, y se avisa claramente si falta.
