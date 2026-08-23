@@ -30,7 +30,7 @@ class SSS_Api_Client {
 		usort(
 			$response,
 			static function ( $a, $b ) {
-				return ( $a['semiMajorAxis'] ?? 0 ) <=> ( $b['semiMajorAxis'] ?? 0 );
+				return self::semimajor_axis( $a ) <=> self::semimajor_axis( $b );
 			}
 		);
 
@@ -124,6 +124,20 @@ class SSS_Api_Client {
 		}
 
 		return $body['bodies'];
+	}
+
+	/**
+	 * Distancia (semieje mayor de la órbita) de un "body" de la API, en km.
+	 *
+	 * El campo se llama "semimajorAxis" (con m minúscula) en la respuesta
+	 * real de la API; se admite también "semiMajorAxis" por si acaso
+	 * cambiara de nuevo.
+	 *
+	 * @param array $body Cuerpo devuelto por la API.
+	 * @return float
+	 */
+	public static function semimajor_axis( $body ) {
+		return (float) ( $body['semimajorAxis'] ?? $body['semiMajorAxis'] ?? 0 );
 	}
 
 	/**
