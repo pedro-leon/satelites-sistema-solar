@@ -53,18 +53,52 @@
 		return value ? value : ( i18n.unknown || '—' );
 	}
 
-	function initExplorer( wrapper ) {
-		var select = wrapper.querySelector( '.sss-planet-select' );
-		var table  = wrapper.querySelector( '.sss-table' );
-		var tbody  = wrapper.querySelector( '.sss-moons-tbody' );
-		var empty  = wrapper.querySelector( '.sss-empty-message' );
+	/**
+	 * El campo "descubridor" puede traer varios nombres separados por comas
+	 * (p. ej. lunas galileanas). Se muestra solo el primero y, si hay más,
+	 * el resto queda disponible al pasar el ratón (atributo title).
+	 */
+	function renderDiscovererCell( td, value ) {
+		if ( ! value ) {
+			td.textContent = i18n.unknown || '—';
+			return;
+		}
 
-		if ( ! select || ! table || ! tbody ) {
+		var names = value.split( ',' ).map( function ( name ) {
+			return name.trim();
+		} ).filter( Boolean );
+
+		td.textContent = names[ 0 ] || ( i18n.unknown || '—' );
+
+		if ( names.length > 1 ) {
+			td.textContent += ' …';
+			td.title = value;
+			td.classList.add( 'sss-has-more' );
+		}
+	}
+
+	function initExplorer( wrapper ) {
+		var buttons  = Array.prototype.slice.call( wrapper.querySelectorAll( '.sss-planet-button' ) );
+		var explorer = wrapper.querySelector( '.sss-explorer' );
+		var title    = wrapper.querySelector( '.sss-explorer-title' );
+		var table    = wrapper.querySelector( '.sss-table' );
+		var tbody    = wrapper.querySelector( '.sss-moons-tbody' );
+		var empty    = wrapper.querySelector( '.sss-empty-message' );
+
+		if ( ! buttons.length || ! explorer || ! table || ! tbody ) {
 			return;
 		}
 
 		var headers = Array.prototype.slice.call( table.querySelectorAll( 'thead th[data-key]' ) );
 		var sortState = { key: 'name', dir: 'asc' };
+		var currentPlanetId = null;
+
+		function planetName( planetId ) {
+			var planet = ( data.planets || [] ).filter( function ( p ) {
+				return p.id === planetId;
+			} )[ 0 ];
+			return planet ? planet.name : '';
+		}
 
 		function updateHeaderIndicators() {
 			headers.forEach( function ( th ) {
@@ -79,19 +113,25 @@
 		function renderRow( moon ) {
 			var tr = document.createElement( 'tr' );
 
-			var cells = [
-				{ value: formatText( moon.name ) },
-				{ value: formatText( moon.provisional_name ) },
-				{ value: formatNumber( moon.distance_km, 0 ) },
-				{ value: formatNumber( moon.diameter_km, 1 ) },
-				{ value: formatNumber( moon.density, 2 ) },
-				{ value: moon.discovery_year ? String( moon.discovery_year ) : ( i18n.unknown || '—' ) },
-				{ value: formatText( moon.discoverer ) },
-			];
-
-			cells.forEach( function ( cell ) {
+			headers.forEach( function ( th ) {
+				var key = th.getAttribute( 'data-key' );
 				var td = document.createElement( 'td' );
-				td.textContent = cell.value;
+				td.className = th.className;
+
+				if ( 'discoverer' === key ) {
+					renderDiscovererCell( td, moon.discoverer );
+				} else if ( 'distance_km' === key ) {
+					td.textContent = formatNumber( moon.distance_km, 0 );
+				} else if ( 'diameter_km' === key ) {
+					td.textContent = formatNumber( moon.diameter_km, 1 );
+				} else if ( 'density' === key ) {
+					td.textContent = formatNumber( moon.density, 2 );
+				} else if ( 'discovery_year' === key ) {
+					td.textContent = moon.discovery_year ? String( moon.discovery_year ) : ( i18n.unknown || '—' );
+				} else {
+					td.textContent = formatText( moon[ key ] );
+				}
+
 				tr.appendChild( td );
 			} );
 
@@ -99,8 +139,7 @@
 		}
 
 		function render() {
-			var planetId = select.value;
-			var moons = ( data.moonsByPlanet && data.moonsByPlanet[ planetId ] ) ? data.moonsByPlanet[ planetId ].slice() : [];
+			var moons = ( data.moonsByPlanet && data.moonsByPlanet[ currentPlanetId ] ) ? data.moonsByPlanet[ currentPlanetId ].slice() : [];
 			var activeHeader = headers.filter( function ( th ) {
 				return th.getAttribute( 'data-key' ) === sortState.key;
 			} )[ 0 ];
@@ -135,7 +174,45 @@
 			updateHeaderIndicators();
 		}
 
-		select.addEventListener( 'change', render );
+		function showPlanet( planetId ) {
+			currentPlanetId = planetId;
+			explorer.hidden = false;
+
+			if ( title ) {
+				var template = i18n.explorerTitle || '%s';
+				title.textContent = template.replace( '%s', planetName( planetId ) );
+			}
+
+			buttons.forEach( function ( button ) {
+				var isActive = button.getAttribute( 'data-planet-id' ) === planetId;
+				button.setAttribute( 'aria-expanded', isActive ? 'true' : 'false' );
+				button.closest( '.sss-summary-item' ).classList.toggle( 'is-active', isActive );
+			} );
+
+			render();
+			explorer.scrollIntoView( { behavior: 'smooth', block: 'nearest' } );
+		}
+
+		function hidePlanets() {
+			currentPlanetId = null;
+			explorer.hidden = true;
+
+			buttons.forEach( function ( button ) {
+				button.setAttribute( 'aria-expanded', 'false' );
+				button.closest( '.sss-summary-item' ).classList.remove( 'is-active' );
+			} );
+		}
+
+		buttons.forEach( function ( button ) {
+			button.addEventListener( 'click', function () {
+				var planetId = button.getAttribute( 'data-planet-id' );
+				if ( planetId === currentPlanetId ) {
+					hidePlanets();
+				} else {
+					showPlanet( planetId );
+				}
+			} );
+		} );
 
 		headers.forEach( function ( th ) {
 			th.setAttribute( 'tabindex', '0' );
@@ -160,8 +237,6 @@
 				}
 			} );
 		} );
-
-		render();
 	}
 
 	function init() {

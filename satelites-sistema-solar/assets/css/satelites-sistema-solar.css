@@ -3,54 +3,90 @@
 	--sss-accent: #2271b1;
 	--sss-bg-alt: #f6f7f7;
 	font-size: 15px;
-	line-height: 1.5;
+	line-height: 1.4;
 }
 
 .sss-notice {
-	padding: 1em;
+	padding: 0.75em 1em;
 	background: var(--sss-bg-alt);
 	border-left: 4px solid var(--sss-accent);
 }
 
 /* Resumen por planeta */
 
-.sss-summary-title {
+.sss-summary {
 	margin-bottom: 0.75em;
+}
+
+.sss-summary-title {
+	margin: 0 0 0.5em;
+	text-align: center;
 }
 
 .sss-summary-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-	gap: 0.75em;
+	grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+	gap: 0.4em;
 	list-style: none;
-	margin: 0 0 1.5em;
+	margin: 0;
 	padding: 0;
 }
 
 .sss-summary-item {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	gap: 0.25em;
-	padding: 1em 0.5em;
 	background: var(--sss-bg-alt);
 	border: 1px solid var(--sss-border);
-	border-radius: 6px;
+	border-radius: 5px;
 	text-align: center;
 }
 
-.sss-summary-item .sss-planet-name {
-	font-weight: 600;
+.sss-planet-button {
+	display: flex;
+	width: 100%;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.1em;
+	margin: 0;
+	padding: 0.5em 0.4em;
+	background: transparent;
+	border: 0;
+	border-radius: inherit;
+	cursor: pointer;
+	font: inherit;
+	color: inherit;
 }
 
-.sss-summary-item .sss-planet-count {
-	font-size: 1.6em;
+.sss-planet-button:hover,
+.sss-planet-button:focus-visible {
+	background: #eaeaea;
+}
+
+.sss-summary-item.is-active {
+	border-color: var(--sss-accent);
+}
+
+.sss-summary-item.is-active .sss-planet-button {
+	background: var(--sss-accent);
+	color: #fff;
+}
+
+.sss-summary-item.is-active .sss-planet-count {
+	color: #fff;
+}
+
+.sss-planet-name {
+	font-weight: 600;
+	font-size: 0.9em;
+}
+
+.sss-planet-count {
+	font-size: 1.3em;
 	font-weight: 700;
 	color: var(--sss-accent);
 }
 
 .sss-summary-total {
+	padding: 0.5em 0.4em;
 	background: var(--sss-accent);
 	border-color: var(--sss-accent);
 }
@@ -60,18 +96,14 @@
 	color: #fff;
 }
 
-/* Selector y tabla */
+/* Listado de satélites del planeta seleccionado */
 
-.sss-select-label {
-	display: block;
-	font-weight: 600;
-	margin-bottom: 0.35em;
+.sss-explorer {
+	margin-top: 0.75em;
 }
 
-.sss-planet-select {
-	margin-bottom: 1em;
-	padding: 0.4em 0.6em;
-	min-width: 220px;
+.sss-explorer-title {
+	margin: 0 0 0.4em;
 }
 
 .sss-table-wrapper {
@@ -81,12 +113,11 @@
 .sss-table {
 	width: 100%;
 	border-collapse: collapse;
-	min-width: 720px;
 }
 
 .sss-table th,
 .sss-table td {
-	padding: 0.6em 0.8em;
+	padding: 0.4em 0.6em;
 	border-bottom: 1px solid var(--sss-border);
 	text-align: left;
 	white-space: nowrap;
@@ -125,13 +156,28 @@
 	background: var(--sss-bg-alt);
 }
 
+/* Columnas numéricas más estrechas: no necesitan tanto ancho como el nombre. */
+.sss-col-diameter_km,
+.sss-col-density,
+.sss-col-discovery_year {
+	width: 1%;
+	text-align: right;
+}
+
+.sss-col-discoverer.sss-has-more {
+	cursor: help;
+	text-decoration: underline dotted;
+	text-decoration-color: var(--sss-border);
+	text-underline-offset: 3px;
+}
+
 .sss-empty-message {
-	padding: 1em;
+	padding: 0.75em;
 	font-style: italic;
 }
 
 .sss-last-updated {
-	margin-top: 1em;
+	margin-top: 0.75em;
 	font-size: 0.85em;
 	color: #646970;
 }

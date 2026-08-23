@@ -58,19 +58,11 @@ class SSS_Shortcode {
 				'moonsByPlanet' => $moons,
 				'counts'       => $counts,
 				'i18n'         => array(
-					'selectPlaceholder' => __( 'Selecciona un planeta…', 'satelites-sistema-solar' ),
 					'noMoons'           => __( 'Este planeta no tiene satélites conocidos.', 'satelites-sistema-solar' ),
 					'unknown'           => __( '—', 'satelites-sistema-solar' ),
 					'satellites'        => __( 'satélites', 'satelites-sistema-solar' ),
-					'columns'           => array(
-						'name'             => __( 'Nombre', 'satelites-sistema-solar' ),
-						'provisional_name' => __( 'Nombre provisional', 'satelites-sistema-solar' ),
-						'distance_km'      => __( 'Distancia al planeta (km)', 'satelites-sistema-solar' ),
-						'diameter_km'      => __( 'Diámetro (km)', 'satelites-sistema-solar' ),
-						'density'          => __( 'Densidad (g/cm³)', 'satelites-sistema-solar' ),
-						'discovery_year'   => __( 'Año de descubrimiento', 'satelites-sistema-solar' ),
-						'discoverer'       => __( 'Descubridor', 'satelites-sistema-solar' ),
-					),
+					/* translators: %s: nombre del planeta. */
+					'explorerTitle'     => __( 'Satélites de %s', 'satelites-sistema-solar' ),
 				),
 			)
 		);
@@ -85,7 +77,6 @@ class SSS_Shortcode {
 		$planets     = SSS_Data_Store::get_planets();
 		$counts      = SSS_Data_Store::get_counts();
 		$last_update = SSS_Data_Store::get_last_updated();
-		$select_id   = wp_unique_id( 'sss-planet-select-' );
 
 		ob_start();
 		?>
@@ -98,12 +89,14 @@ class SSS_Shortcode {
 			<?php else : ?>
 
 				<div class="sss-summary">
-					<h3 class="sss-summary-title"><?php esc_html_e( 'Satélites por planeta', 'satelites-sistema-solar' ); ?></h3>
+					<h3 class="sss-summary-title"><?php esc_html_e( 'Número de satélites por planeta', 'satelites-sistema-solar' ); ?></h3>
 					<ul class="sss-summary-grid">
 						<?php foreach ( $planets as $planet ) : ?>
 							<li class="sss-summary-item">
-								<span class="sss-planet-name"><?php echo esc_html( $planet['name'] ); ?></span>
-								<span class="sss-planet-count"><?php echo esc_html( $counts['by_planet'][ $planet['id'] ] ?? 0 ); ?></span>
+								<button type="button" class="sss-planet-button" data-planet-id="<?php echo esc_attr( $planet['id'] ); ?>" aria-expanded="false">
+									<span class="sss-planet-name"><?php echo esc_html( $planet['name'] ); ?></span>
+									<span class="sss-planet-count"><?php echo esc_html( $counts['by_planet'][ $planet['id'] ] ?? 0 ); ?></span>
+								</button>
 							</li>
 						<?php endforeach; ?>
 						<li class="sss-summary-item sss-summary-total">
@@ -113,38 +106,19 @@ class SSS_Shortcode {
 					</ul>
 				</div>
 
-				<div class="sss-explorer">
-					<label class="sss-select-label" for="<?php echo esc_attr( $select_id ); ?>">
-						<?php esc_html_e( 'Selecciona un planeta', 'satelites-sistema-solar' ); ?>
-					</label>
-					<select id="<?php echo esc_attr( $select_id ); ?>" class="sss-planet-select">
-						<?php foreach ( $planets as $planet ) : ?>
-							<option value="<?php echo esc_attr( $planet['id'] ); ?>">
-								<?php
-								echo esc_html(
-									sprintf(
-										/* translators: 1: nombre del planeta, 2: número de satélites. */
-										__( '%1$s (%2$d)', 'satelites-sistema-solar' ),
-										$planet['name'],
-										$counts['by_planet'][ $planet['id'] ] ?? 0
-									)
-								);
-								?>
-							</option>
-						<?php endforeach; ?>
-					</select>
-
+				<div class="sss-explorer" hidden>
+					<h4 class="sss-explorer-title"></h4>
 					<div class="sss-table-wrapper">
 						<table class="sss-table">
 							<thead>
 								<tr>
-									<th data-key="name" data-type="string"><?php esc_html_e( 'Nombre', 'satelites-sistema-solar' ); ?></th>
-									<th data-key="provisional_name" data-type="string"><?php esc_html_e( 'Nombre provisional', 'satelites-sistema-solar' ); ?></th>
-									<th data-key="distance_km" data-type="number"><?php esc_html_e( 'Distancia al planeta (km)', 'satelites-sistema-solar' ); ?></th>
-									<th data-key="diameter_km" data-type="number"><?php esc_html_e( 'Diámetro (km)', 'satelites-sistema-solar' ); ?></th>
-									<th data-key="density" data-type="number"><?php esc_html_e( 'Densidad (g/cm³)', 'satelites-sistema-solar' ); ?></th>
-									<th data-key="discovery_year" data-type="number"><?php esc_html_e( 'Año de descubrimiento', 'satelites-sistema-solar' ); ?></th>
-									<th data-key="discoverer" data-type="string"><?php esc_html_e( 'Descubridor', 'satelites-sistema-solar' ); ?></th>
+									<th class="sss-col-name" data-key="name" data-type="string"><?php esc_html_e( 'Nombre', 'satelites-sistema-solar' ); ?></th>
+									<th class="sss-col-provisional_name" data-key="provisional_name" data-type="string"><?php esc_html_e( 'Nombre provisional', 'satelites-sistema-solar' ); ?></th>
+									<th class="sss-col-distance_km" data-key="distance_km" data-type="number"><?php esc_html_e( 'Distancia al planeta (km)', 'satelites-sistema-solar' ); ?></th>
+									<th class="sss-col-diameter_km" data-key="diameter_km" data-type="number"><?php esc_html_e( 'Diámetro (km)', 'satelites-sistema-solar' ); ?></th>
+									<th class="sss-col-density" data-key="density" data-type="number"><?php esc_html_e( 'Densidad (g/cm³)', 'satelites-sistema-solar' ); ?></th>
+									<th class="sss-col-discovery_year" data-key="discovery_year" data-type="number"><?php esc_html_e( 'Año', 'satelites-sistema-solar' ); ?></th>
+									<th class="sss-col-discoverer" data-key="discoverer" data-type="string"><?php esc_html_e( 'Descubridor', 'satelites-sistema-solar' ); ?></th>
 								</tr>
 							</thead>
 							<tbody class="sss-moons-tbody"></tbody>

@@ -73,7 +73,7 @@ class SSS_Data_Store {
 
 		$provisional_name = ( '' !== $alternative_name && $alternative_name !== $name ) ? $alternative_name : '';
 
-		$distance = isset( $moon['semiMajorAxis'] ) ? (float) $moon['semiMajorAxis'] : 0;
+		$distance = SSS_Api_Client::semimajor_axis( $moon );
 		$diameter = isset( $moon['meanRadius'] ) ? ( (float) $moon['meanRadius'] ) * 2 : 0;
 		$density  = isset( $moon['density'] ) ? (float) $moon['density'] : 0;
 
