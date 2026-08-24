@@ -12,6 +12,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 class SSS_Data_Store {
 
 	/**
+	 * Designaciones provisionales de objetos vistos una sola vez cerca del
+	 * anillo F de Saturno que nunca se han podido confirmar como satélites
+	 * reales (probablemente cúmulos transitorios de polvo, no cuerpos
+	 * sólidos). La API los sigue incluyendo, pero fuentes que depuran su
+	 * lista activamente (como la del JPL) ya no los cuentan, así que aquí
+	 * se excluyen también aunque la API no los haya retirado.
+	 *
+	 * @var string[]
+	 */
+	private static $excluded_designations = array(
+		'S/2004 S 3',
+		'S/2004 S 4',
+		'S/2004 S 6',
+	);
+
+	/**
 	 * Descarga los datos de la API, los normaliza y los guarda en la base de datos.
 	 *
 	 * @return true|WP_Error
@@ -36,6 +52,10 @@ class SSS_Data_Store {
 			$planet_id = $moon['aroundPlanet']['planet'] ?? '';
 			if ( '' === $planet_id || ! isset( $planet_ids[ $planet_id ] ) ) {
 				continue; // Solo nos interesan satélites de los 8 planetas.
+			}
+
+			if ( in_array( trim( $moon['alternativeName'] ?? '' ), self::$excluded_designations, true ) ) {
+				continue;
 			}
 
 			$normalized_moons[] = self::normalize_moon( $moon, $planet_id );
