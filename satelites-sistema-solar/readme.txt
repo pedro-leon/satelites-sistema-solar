@@ -4,7 +4,7 @@ Tags: satelites, lunas, planetas, api, astronomia
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -48,7 +48,16 @@ Una vez a la semana, mediante WP-Cron. También se pueden actualizar manualmente
 
 Los ocho planetas oficiales del sistema solar (Mercurio a Neptuno). No incluye planetas enanos como Plutón.
 
+= ¿Por qué el número de satélites de Saturno no coincide exactamente con el de otras fuentes (p. ej. JPL)? =
+
+El plugin excluye a propósito 3 designaciones provisionales que la API sigue incluyendo pero que nunca se han confirmado como satélites reales: **S/2004 S 3, S/2004 S 4 y S/2004 S 6**. Los tres fueron vistos una sola vez por la sonda Cassini en 2004 cerca del anillo F de Saturno y nunca se recuperaron en observaciones posteriores — probablemente eran cúmulos de polvo transitorios, no cuerpos sólidos. Fuentes que depuran su lista activamente (como el JPL) ya no los cuentan.
+
+**Nota:** esta exclusión es una decisión manual (ver `SSS_Data_Store::$excluded_designations` en el código), pendiente de revisar si en el futuro alguno de los tres se confirma definitivamente como satélite real o se descarta oficialmente por la IAU/JPL.
+
 == Changelog ==
+
+= 1.3.1 =
+* Se excluyen del recuento 3 designaciones provisionales de Saturno (S/2004 S 3, S/2004 S 4, S/2004 S 6) que la API sigue incluyendo pero que nunca se han confirmado como satélites reales. Ver la pregunta frecuente correspondiente.
 
 = 1.3.0 =
 * El CSS se blinda frente a temas y constructores de página (p. ej. Elementor) que aplican sus propios estilos globales a `<button>`, `<h3>`, `<p>`, etc., y que hacían que los recuadros de planeta se vieran con los colores del tema y el nombre/número en la misma línea.
