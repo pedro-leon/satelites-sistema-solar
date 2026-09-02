@@ -4,7 +4,7 @@ Tags: satelites, lunas, planetas, api, astronomia
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.4.0
+Stable tag: 1.4.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -55,6 +55,10 @@ El plugin excluye a propósito 3 designaciones provisionales que la API sigue in
 **Nota:** esta exclusión es una decisión manual (ver `SSS_Data_Store::$excluded_designations` en el código), pendiente de revisar si en el futuro alguno de los tres se confirma definitivamente como satélite real o se descarta oficialmente por la IAU/JPL.
 
 == Changelog ==
+
+= 1.4.1 =
+* El color oscuro del nombre de cada planeta (1.4.0) dependía de heredarlo del contenedor, y en algunas páginas otro CSS podía colarse por encima aunque el nuestro tuviera más prioridad ahí. Ahora cada texto declara su propio color explícitamente (igual que ya hacía el número), en vez de depender de la herencia.
+* El aviso "Este planeta no tiene satélites conocidos." también se muestra en blanco (pensado para fondos oscuros, no tenía fondo propio).
 
 = 1.4.0 =
 * El título "Número de satélites por planeta" y el título "Satélites de [planeta]" ahora se muestran en blanco, pensados para páginas con fondo oscuro.
