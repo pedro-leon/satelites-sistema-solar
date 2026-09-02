@@ -55,6 +55,7 @@
 	padding: 0.75em 1em !important;
 	background: var(--sss-bg-alt) !important;
 	border-left: 4px solid var(--sss-accent) !important;
+	color: var(--sss-text) !important;
 }
 
 /* Resumen por planeta */
@@ -123,6 +124,7 @@
 	display: block !important;
 	font-weight: 600 !important;
 	font-size: 0.8em !important;
+	color: var(--sss-text) !important;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -167,6 +169,7 @@
 .sss-wrapper .sss-explorer-hint {
 	padding: 0.75em 1em !important;
 	background: var(--sss-bg-alt) !important;
+	color: var(--sss-text) !important;
 	font-style: italic;
 }
 
@@ -184,6 +187,7 @@
 	padding: 0.4em 0.6em !important;
 	border-bottom: 1px solid var(--sss-border) !important;
 	text-align: left !important;
+	color: var(--sss-text) !important;
 	white-space: nowrap;
 }
 
@@ -243,6 +247,7 @@
 .sss-wrapper .sss-empty-message {
 	padding: 0.75em !important;
 	font-style: italic;
+	color: #fff !important;
 }
 
 .sss-wrapper .sss-last-updated {
