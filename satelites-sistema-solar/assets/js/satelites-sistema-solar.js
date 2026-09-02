@@ -198,7 +198,6 @@
 			} );
 
 			render();
-			explorer.scrollIntoView( { behavior: 'smooth', block: 'nearest' } );
 		}
 
 		function hidePlanets() {

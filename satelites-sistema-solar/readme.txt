@@ -4,7 +4,7 @@ Tags: satelites, lunas, planetas, api, astronomia
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.3.1
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -55,6 +55,12 @@ El plugin excluye a propósito 3 designaciones provisionales que la API sigue in
 **Nota:** esta exclusión es una decisión manual (ver `SSS_Data_Store::$excluded_designations` en el código), pendiente de revisar si en el futuro alguno de los tres se confirma definitivamente como satélite real o se descarta oficialmente por la IAU/JPL.
 
 == Changelog ==
+
+= 1.4.0 =
+* El título "Número de satélites por planeta" y el título "Satélites de [planeta]" ahora se muestran en blanco, pensados para páginas con fondo oscuro.
+* El nombre de cada planeta en su recuadro tiene ahora un color oscuro propio por defecto (antes heredaba el color de texto de la página, por lo que podía volverse invisible con fondos oscuros); solo se pone en blanco el recuadro del planeta seleccionado.
+* Las filas de la tabla de satélites alternan ahora entre blanco y gris explícitos (antes una de cada dos filas era transparente y podía volverse invisible con fondos oscuros).
+* Al pulsar en un planeta ya no se desplaza automáticamente la página hacia la tabla.
 
 = 1.3.1 =
 * Se excluyen del recuento 3 designaciones provisionales de Saturno (S/2004 S 3, S/2004 S 4, S/2004 S 6) que la API sigue incluyendo pero que nunca se han confirmado como satélites reales. Ver la pregunta frecuente correspondiente.
