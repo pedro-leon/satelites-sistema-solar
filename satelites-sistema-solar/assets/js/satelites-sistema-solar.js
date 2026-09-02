@@ -92,7 +92,7 @@
 		}
 
 		var headers = Array.prototype.slice.call( table.querySelectorAll( 'thead th[data-key]' ) );
-		var sortState = { key: 'name', dir: 'asc' };
+		var sortState = { key: 'distance_km', dir: 'asc' };
 		var currentPlanetId = null;
 
 		function planetName( planetId ) {
